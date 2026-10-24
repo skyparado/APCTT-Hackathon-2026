@@ -215,13 +215,14 @@ def self_test() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("cases", nargs="*", help="case_id folders under data/cases/ (default: all)")
+    parser.add_argument("cases", nargs="*", help="case_id folders under --dir (default: all)")
+    parser.add_argument("--dir", type=Path, default=CASES, help="folder of case folders (default: data/cases; data/heldout for the held-out set)")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
         self_test()
         return 0
-    dirs = [CASES / c for c in args.cases] or sorted(p for p in CASES.iterdir() if p.is_dir())
+    dirs = [args.dir / c for c in args.cases] or sorted(p for p in args.dir.iterdir() if p.is_dir())
     failed = 0
     for case_dir in dirs:
         issues = build_one(case_dir)

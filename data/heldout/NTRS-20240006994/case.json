@@ -1,0 +1,23 @@
+{
+  "schema_version": "apctt-pdf-example-v1",
+  "input_profile": "pdf_report",
+  "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+  "case_id": "NTRS-20240006994",
+  "assessment_as_of": null,
+  "assessment_target": {
+    "target_id": "NTRS-20240006994-T1",
+    "type": "technology",
+    "description": "Starling swarm technologies: crosslink mesh networking, onboard autonomy, optical relative navigation and autonomous maneuvering on 6U CubeSats"
+  },
+  "intended_application": "Coordination of future spacecraft swarms",
+  "intended_environment": "Low Earth orbit (about 575 km)",
+  "title": "Smallsat 2024 - Starling Cubesat Swarm Technology Demonstration Flight Results",
+  "documents": [
+    {
+      "document_id": "D001",
+      "file": "D001.pdf",
+      "title": "Smallsat 2024 - Starling Cubesat Swarm Technology Demonstration Flight Results",
+      "document_date": "2024-06-10"
+    }
+  ]
+}

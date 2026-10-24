@@ -1,0 +1,62 @@
+{
+  "case_id": "NTRS-20150009948",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; held-out set, labelled before any module run; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 5,
+  "abstention_reason": null,
+  "trl_rationale": "High-fidelity engineering development unit of the thruster (a component of the propulsion system) performance-tested in vacuum, thermally characterised within material limits, and survived qualification full-level random vibration with unchanged performance. Power processing unit and feed system are still separate, so not a subsystem demonstration.",
+  "evidence": [
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 13,
+      "quote": "Inspection of the thruster hardware after each test cycle confirmed that the thruster withstood and survived the full-level applied loads.",
+      "note": "relevant environment"
+    },
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 13,
+      "quote": "Post-vibration test performance evaluation confirmed that the thruster performance was not altered due to being subject to a full-level three axes random vibration test.",
+      "note": "result"
+    },
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "Performance test results indicated that at 3.9 kW the thruster achieved a total thrust efficiency and specific impulse of 58%, and 2,700 sec, respectively.",
+      "note": "measured performance"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 13
+        },
+        {
+          "document_id": "D001",
+          "page": 1
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 13
+        },
+        {
+          "document_id": "D001",
+          "page": 1
+        }
+      ]
+    }
+  },
+  "review_notes": "TRL 6 arguable for a flight-like EDU; labelled 5 for consistency with the NEXT PM1 case (component, not subsystem)."
+}

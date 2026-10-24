@@ -1,0 +1,52 @@
+{
+  "case_id": "NTRS-20200002413",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; held-out set, labelled before any module run; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 6,
+  "abstention_reason": null,
+  "trl_rationale": "A subscale system prototype flew on a suborbital sounding rocket, deployed and flew free to Mach 3.09 with full trajectory reconstruction. That is a relevant flight environment but not full-scale planetary entry heating, so 6 rather than 7.",
+  "evidence": [
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "Specifically, the ADEPT SR-1 mission tested a 0.7 meter deployable heat shield from a sounding rocket launch vehicle.",
+      "note": "subscale prototype flight"
+    },
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 11,
+      "quote": "The vehicle was delivered within the nominal flight envelope by the launch provider and achieved a maximum Mach number and dynamic pressure of 3.09 and 818.4 Pa respectively.",
+      "note": "measured flight result"
+    },
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 2,
+      "quote": "The vehicle was successfully released from the sounding rocket approximately 96 seconds after launch.",
+      "note": "flight event"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 1
+        },
+        {
+          "document_id": "D001",
+          "page": 11
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "TRL 7 arguable if suborbital flight counts as operational; the paper is about trajectory reconstruction, not heatshield performance."
+}

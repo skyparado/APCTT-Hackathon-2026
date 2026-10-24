@@ -1,0 +1,48 @@
+{
+  "case_id": "NTRS-20240006994",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; held-out set, labelled before any module run; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 7,
+  "abstention_reason": null,
+  "trl_rationale": "Four CubeSats demonstrated all four technologies on orbit over several months in the operational environment. A technology demonstration mission, not an operational science mission, so 7 rather than 9.",
+  "evidence": [
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "The four satellites were able to successfully establish a network at multiple data rates and demonstrate file transfer and command issuance between spacecraft over the network.",
+      "note": "on-orbit demo"
+    },
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "StarFOX successfully applied its algorithms to navigate multiple spacecraft targets simultaneously, using star tracker imagery.",
+      "note": "on-orbit result"
+    },
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 2,
+      "quote": "The swarm operated for four months in the in-train formation.",
+      "note": "operational duration"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 1
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "NTRS licence GOV_PERMITTED (SmallSat conference paper)."
+}

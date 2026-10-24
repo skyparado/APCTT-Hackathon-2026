@@ -1,0 +1,41 @@
+{
+  "case_id": "NTRS-20160009293",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; held-out set, labelled before any module run; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 3,
+  "abstention_reason": null,
+  "trl_rationale": "Laboratory testbed built, materials fabricated and tested, and manual optical shape control rudimentally demonstrated. Automatic closed-loop control is still Phase II work, so no integrated breadboard validation yet.",
+  "evidence": [
+    {
+      "trl_level": 3,
+      "document_id": "D001",
+      "page": 31,
+      "quote": "Materials were fabricated and tested.",
+      "note": "lab proof of concept"
+    },
+    {
+      "trl_level": 3,
+      "document_id": "D001",
+      "page": 5,
+      "quote": "We have rudimentally demonstrated a completely novel approach to producing and correcting active optical primary mirrors",
+      "note": "rudimentary demonstration"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 31
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "LICENCE CHECK: every page says 'Copyright Joe Ritter all rights reserved' although NTRS says PUBLIC_USE_PERMITTED; do not commit this PDF without checking. Trap p.30: 'will require a major software development effort in Phase II'."
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "apctt-pdf-example-v1",
+  "input_profile": "pdf_report",
+  "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+  "case_id": "NTRS-20260001044",
+  "assessment_as_of": null,
+  "assessment_target": {
+    "target_id": "NTRS-20260001044-T1",
+    "type": "component",
+    "description": "Supersonic spike ejector (spike diffuser) for vacuum generation"
+  },
+  "intended_application": "Vacuum generation for rocket propulsion test facilities and industrial processes",
+  "intended_environment": "Ground test facilities and industrial plants",
+  "title": "Experimental Demonstration of a Supersonic Spike Ejector",
+  "documents": [
+    {
+      "document_id": "D001",
+      "file": "D001.pdf",
+      "title": "Experimental Demonstration of a Supersonic Spike Ejector",
+      "document_date": "2026-05-01"
+    }
+  ]
+}

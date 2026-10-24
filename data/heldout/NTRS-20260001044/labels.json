@@ -1,0 +1,41 @@
+{
+  "case_id": "NTRS-20260001044",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; held-out set, labelled before any module run; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 4,
+  "abstention_reason": null,
+  "trl_rationale": "A lab-scale articulated prototype was designed, fabricated and extensively tested, and its measured performance compared with conventional design limits. Lab only, not at facility scale.",
+  "evidence": [
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 8,
+      "quote": "A lab-scale prototype was designed, fabricated, and extensively tested to experimentally support that claim.",
+      "note": "lab prototype tested"
+    },
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 8,
+      "quote": "Results have been compared to the empirical limits of conventional design.",
+      "note": "measured result"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 8
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "TRL 3 arguable (single device, critical-function experiment). Trap p.8: 'Industrial rollout will require an array of spike ejector designs'."
+}

@@ -130,7 +130,8 @@ def _self_test() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("cases", nargs="*", help="case folders under data/cases (default: all)")
+    parser.add_argument("cases", nargs="*", help="case folders under --dir (default: all)")
+    parser.add_argument("--dir", type=Path, default=CASES, help="folder of case folders (data/heldout for the held-out set)")
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--base", default="http://127.0.0.1:8000")
     parser.add_argument("--timeout", type=float, default=600.0, help="seconds per case, including queueing")
@@ -150,7 +151,7 @@ def main() -> int:
         return 2
 
     run_tag = time.strftime("r%Y%m%d%H%M%S")
-    dirs = [CASES / c for c in args.cases] or sorted(p for p in CASES.iterdir() if p.is_dir())
+    dirs = [args.dir / c for c in args.cases] or sorted(p for p in args.dir.iterdir() if p.is_dir())
     rows, met_all, not_all, q_valid, q_total, failures = [], [], [], 0, 0, 0
     print(f"{'case':18} {'label':10} {'ours':22} {'A':>4}  {'origin':10} {'server ms':>9} {'wall s':>7}  notes")
     for case_dir in dirs:
