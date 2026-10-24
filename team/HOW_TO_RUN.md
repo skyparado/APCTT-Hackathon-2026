@@ -33,7 +33,7 @@ the bundler) and set:
   "example_only": false,
   "settings": {}
 },
-"worker": { "python": "/absolute/path/to/apctt-env/base/bin/python", "extra_env": {} }
+"worker": { "python": "/absolute/path/to/apctt-env/bin/python", "extra_env": {} }
 ```
 
 `module_root` is the folder that **contains** `participant_module/`. Our skeleton module
