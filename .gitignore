@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+server_data/
+*.local.json
+.claude/
