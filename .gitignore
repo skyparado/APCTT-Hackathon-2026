@@ -4,3 +4,4 @@ __pycache__/
 server_data/
 *.local.json
 .claude/
+data/cases/*/request.json

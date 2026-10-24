@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 381 >>
+stream
+BT /F1 11 Tf 14 TL 72 720 Td (SYNTHETIC EXAMPLE - NOT A REAL TECHNOLOGY) Tj T* () Tj T* (Compact Radiator Panel for Small Satellites: Test Report) Tj T* () Tj T* (1. Background) Tj T* (Earlier studies showed that loop heat pipes can cool small spacecraft.) Tj T* (The project targets TRL 6 by the end of 2027.) Tj T* (This report covers the radiator panel component only.) Tj T* ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 448 >>
+stream
+BT /F1 11 Tf 14 TL 72 720 Td (2. Thermal vacuum test) Tj T* () Tj T* (A flight-like radiator panel was built from aluminium honeycomb with embedded heat pipes.) Tj T* (The panel was tested in a thermal vacuum chamber from -40 C to +85 C over 12 cycles.) Tj T* (Measured heat rejection was 41 W at 20 C, within 3 percent of the analytical prediction.) Tj T* (All acceptance criteria in the test plan were met, with no leaks or degradation.) Tj T* ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 226 >>
+stream
+BT /F1 11 Tf 14 TL 72 720 Td (3. Next steps) Tj T* () Tj T* (The panel will be integrated with the full thermal control subsystem in 2027.) Tj T* (A flight demonstration on a 6U CubeSat is planned but not yet funded.) Tj T* ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000323 00000 n 
+0000000755 00000 n 
+0000000881 00000 n 
+0000001380 00000 n 
+0000001506 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+1783
+%%EOF

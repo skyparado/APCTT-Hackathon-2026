@@ -1,0 +1,36 @@
+{
+  "case_id": "EX-001",
+  "labelled_by": "theoithinkk",
+  "labelled_on": "2026-10-24",
+  "label_origin": "synthetic example written by the team to show the format; not a real technology",
+  "assessment_status": "completed",
+  "trl": 5,
+  "abstention_reason": null,
+  "trl_rationale": "A flight-like component was tested in a thermal vacuum chamber (relevant environment for LEO) and met its acceptance criteria. No system-level prototype yet, so not TRL 6. The 'targets TRL 6' sentence is a goal, not evidence.",
+  "evidence": [
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 2,
+      "quote": "The panel was tested in a thermal vacuum chamber from -40 C to +85 C over 12 cycles.",
+      "note": "component, relevant environment"
+    },
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 2,
+      "quote": "All acceptance criteria in the test plan were met, with no leaks or degradation.",
+      "note": "result against stated criteria"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [{"document_id": "D001", "page": 2}]
+    },
+    "DEMO-C02": {
+      "status": "met",
+      "pages": [{"document_id": "D001", "page": 2}]
+    }
+  }
+}

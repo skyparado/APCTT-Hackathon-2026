@@ -1,0 +1,2 @@
+case_id,document_id,source,url,version,date,role,label_origin,linked_project,license
+EX-001,D001,Team-written synthetic report,,1,2026-10-24,format example,synthetic example written by the team; not a real technology,,MIT
