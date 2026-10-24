@@ -1,4 +1,4 @@
-"""Unit tests for the output builder (Task 14) and time guard (Task 15).
+"""Unit tests for the output builder (Task 14), time guard (Task 15) and adapter TRL wiring (Task 13).
 
 Standard library only (unittest), so it runs anywhere the module runs, including the common
 base environment. Run:  python -I team/test_module.py   (or: pytest team/test_module.py)
@@ -14,6 +14,7 @@ from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from participant_module import budget, output  # noqa: E402
+from participant_module.adapter import AssessmentModule  # noqa: E402
 
 CASE = {
     "schema_version": "apctt-pdf-example-v1",
@@ -133,6 +134,78 @@ class TimeGuardTests(unittest.TestCase):
             raise ValueError("clock gone")
         guard = budget.TimeGuard(SimpleNamespace(time_budget_ms=180000, remaining_ms=bad))
         self.assertGreater(guard.remaining_ms(), 0)
+
+
+class _FakePdfium:
+    """Stands in for pypdfium2: serves fixed page texts per path; 'broken' paths raise."""
+
+    def __init__(self, docs: dict[str, list[str]]) -> None:
+        self._docs = docs
+
+    def PdfDocument(self, path: str):  # noqa: N802 - mirrors the pypdfium2 API
+        if path not in self._docs:
+            raise RuntimeError(f"cannot open {path}")
+        return _FakeDoc(
+            SimpleNamespace(
+                get_textpage=lambda t=text: SimpleNamespace(get_text_range=lambda: t, close=lambda: None),
+                close=lambda: None,
+            )
+            for text in self._docs[path]
+        )
+
+
+class _FakeDoc(list):
+    """A list of pages with the close() that pypdfium2 documents have."""
+
+    def close(self) -> None:
+        pass
+
+
+class AdapterTrlTests(unittest.TestCase):
+    CHECKLIST = {"version": VERSION, "criteria": [{"criterion_id": c} for c in IDS]}
+
+    def _run(self, docs: dict[str, list[str]], case_docs: list[dict], target_type: str = "component") -> dict:
+        module = AssessmentModule()
+        module.load({"checklist": self.CHECKLIST}, Path("."))
+        module._pdfium = _FakePdfium(docs)
+        case = dict(CASE, assessment_target={"target_id": "T001", "type": target_type, "description": "x"},
+                    documents=case_docs)
+        result = module.assess(case, SimpleNamespace(time_budget_ms=180000, remaining_ms=lambda: 170000))
+        self.assertEqual(output.validate_local(result, case, IDS), [])
+        return result
+
+    def test_real_trl_with_page_cited(self) -> None:
+        result = self._run(
+            {"a.pdf": ["The project targets TRL 6 by the end of 2027.",
+                       "The panel was tested in a thermal vacuum chamber from -40 C to +85 C over 12 cycles."]},
+            [{"document_id": "D001", "page_count": 2, "path": "a.pdf"}])
+        self.assertEqual((result["assessment_status"], result["predicted_trl"]), ("completed", 5))
+        self.assertIn("D001 p.2", result["trl_rationale"])
+        self.assertEqual(set(result["criterion_status"].values()), {"insufficient evidence"})
+
+    def test_claims_and_plans_only_abstain(self) -> None:
+        result = self._run(
+            {"a.pdf": ["The system has reached TRL 6 according to the team.",
+                       "A flight demonstration will be performed next year."]},
+            [{"document_id": "D001", "page_count": 2, "path": "a.pdf"}])
+        self.assertEqual(result["assessment_status"], "abstained")
+        self.assertEqual(result["abstention_reason"], "insufficient evidence")
+
+    def test_broken_document_is_skipped(self) -> None:
+        result = self._run(
+            {"good.pdf": ["The instrument began operating in mission mode August 25."]},
+            [{"document_id": "D001", "page_count": 1, "path": "broken.pdf"},
+             {"document_id": "D002", "page_count": 1, "path": "good.pdf"}])
+        self.assertEqual(result["predicted_trl"], 9)
+        self.assertIn("D002 p.1", result["trl_rationale"])
+
+    def test_no_pdf_library_abstains(self) -> None:
+        module = AssessmentModule()
+        module.load({"checklist": self.CHECKLIST}, Path("."))
+        module._pdfium = None
+        result = module.assess(CASE, SimpleNamespace(time_budget_ms=180000, remaining_ms=lambda: 170000))
+        self.assertEqual(result["assessment_status"], "abstained")
+        self.assertEqual(output.validate_local(result, CASE, IDS), [])
 
 
 if __name__ == "__main__":
