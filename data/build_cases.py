@@ -133,7 +133,8 @@ def check_labels(labels: dict, case: dict, page_texts: dict[str, list[str]] | No
 
 
 def _norm(text: str) -> str:
-    return " ".join(text.split()).lower()
+    # pdfium extracts a hyphen at some line breaks as U+FFFE; a reader sees "-".
+    return " ".join(text.replace("￾", "-").split()).lower()
 
 
 def read_pages(pdf: Path) -> list[str] | None:
@@ -200,7 +201,9 @@ def self_test() -> None:
     good = {"case_id": "X", "labelled_by": "a", "labelled_on": "2026-01-01", "label_origin": "o",
             "assessment_status": "completed", "trl": 4, "abstention_reason": None,
             "evidence": [{"document_id": "D001", "page": 1, "quote": "The rig was tested at 5 bar."}]}
-    texts = {"D001": ["Intro.  The rig was tested\nat 5 bar. More."]}
+    texts = {"D001": ["Intro.  The rig was tested\nat 5 bar. More. A full￾level test."]}
+    hyphen = dict(good, evidence=[{"document_id": "D001", "page": 1, "quote": "A full-level test."}])
+    assert check_labels(hyphen, case, texts) == [], check_labels(hyphen, case, texts)
     assert check_labels(good, case, texts) == [], check_labels(good, case, texts)
     bad = dict(good, trl=None, evidence=[{"document_id": "D001", "page": 2, "quote": "It reached TRL 6."}])
     msgs = " ".join(check_labels(bad, case, texts))

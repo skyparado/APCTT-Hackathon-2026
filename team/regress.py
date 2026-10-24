@@ -100,7 +100,7 @@ def quote_checks(result: dict, case: dict, case_dir: Path) -> tuple[int, int]:
     except ImportError:
         return 0, 0
     files = {d["document_id"]: case_dir / d["file"] for d in case["documents"]}
-    norm = lambda s: " ".join(s.split()).lower()  # noqa: E731
+    norm = lambda s: " ".join(s.replace("￾", "-").split()).lower()  # noqa: E731  (pdfium hyphen)
     valid = 0
     for doc_id, page, span in spans:
         pdf = pdfium.PdfDocument(str(files[doc_id]))
