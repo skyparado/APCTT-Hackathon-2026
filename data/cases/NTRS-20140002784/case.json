@@ -1,0 +1,23 @@
+{
+  "schema_version": "apctt-pdf-example-v1",
+  "input_profile": "pdf_report",
+  "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+  "case_id": "NTRS-20140002784",
+  "assessment_as_of": null,
+  "assessment_target": {
+    "target_id": "NTRS-20140002784-T1",
+    "type": "subsystem",
+    "description": "Heat rejection (cold-end) subsystem of the Fission Power System Technology Demonstration Unit: pumped water loop and radiator"
+  },
+  "intended_application": "Waste-heat rejection for a fission surface power system",
+  "intended_environment": "Lunar or planetary surface",
+  "title": "Cold-end Subsystem Testing for the Fission Power System Technology Demonstration Unit",
+  "documents": [
+    {
+      "document_id": "D001",
+      "file": "D001.pdf",
+      "title": "Cold-end Subsystem Testing for the Fission Power System Technology Demonstration Unit",
+      "document_date": "2013-08-01"
+    }
+  ]
+}

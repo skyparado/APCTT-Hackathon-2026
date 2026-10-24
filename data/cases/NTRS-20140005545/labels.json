@@ -1,0 +1,46 @@
+{
+  "case_id": "NTRS-20140005545",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 9,
+  "abstention_reason": null,
+  "trl_rationale": "Flown on an actual mission; flight data and the successful landing confirm heatshield performance.",
+  "evidence": [
+    {
+      "trl_level": 9,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "The flight data from the instrumentation, along with the successful landing of the rover, confirms the performance of the heatshield and the conservative heatshield design and margins process.",
+      "note": "proven in mission"
+    },
+    {
+      "trl_level": 9,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "The rover was protected from the extreme heating environments of Martian atmospheric entry by an ablative heatshield.",
+      "note": "operational use"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 1
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 1
+        }
+      ]
+    }
+  }
+}

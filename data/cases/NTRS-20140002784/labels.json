@@ -1,0 +1,48 @@
+{
+  "case_id": "NTRS-20140002784",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 4,
+  "abstention_reason": null,
+  "trl_rationale": "Subsystem hardware assembled in the vacuum facility but its thermal-vacuum testing is still planned. A subscale proof-of-concept radiator was built and tested.",
+  "evidence": [
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 11,
+      "quote": "The panel was tested at water temperatures ranging from 330 to 400 K and a sink temperature of 190 K.",
+      "note": "subscale radiator test"
+    },
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 12,
+      "quote": "The affordable design was shown to increase heat rejection per unit mass compared to the Second Generation Radiator Demonstration Unit at a fraction of the cost.",
+      "note": "measured result"
+    },
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 12,
+      "quote": "All components have been mounted to the Technology Demonstration Unit structural elements and have been assembled in the Vacuum Facility 6 test chamber at Glenn.",
+      "note": "integrated, not yet tested"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 11
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "Trap p.12 and abstract: 'HRS testing will include...' and 'will demonstrate functionality' are future tense."
+}

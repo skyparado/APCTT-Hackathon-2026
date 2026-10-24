@@ -1,0 +1,48 @@
+{
+  "case_id": "NTRS-20080012738",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 5,
+  "abstention_reason": null,
+  "trl_rationale": "High-fidelity prototype engine (a component of the propulsion subsystem) put through qualification-level vibration and thermal-vacuum tests, i.e. relevant environment. Issues were found. Not a full subsystem demonstration, so 5 rather than 6.",
+  "evidence": [
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 5,
+      "quote": "The Prototype Model engine PM1 was subjected to qualification-level environmental testing to demonstrate compatibility with environments representative of anticipated mission requirements.",
+      "note": "relevant environment"
+    },
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 5,
+      "quote": "Random vibration testing, conducted with the thruster mated to the breadboard gimbal, was executed at 10.0 G rms for 2 minutes in each of three axes.",
+      "note": "test conditions"
+    },
+    {
+      "trl_level": 5,
+      "document_id": "D001",
+      "page": 5,
+      "quote": "There were no significant changes in engine performance as characterized by engine operating parameters, ion optics performance measurements, and beam current density measurements, indicating no significant changes to the hardware as a result of the environmental testing.",
+      "note": "result"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 5
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "TRL 6 is arguable if the engine plus gimbal counts as a subsystem prototype. Cathode heater potting fragmented during vibration (abstract)."
+}

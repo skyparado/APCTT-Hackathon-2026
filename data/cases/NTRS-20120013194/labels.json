@@ -1,0 +1,58 @@
+{
+  "case_id": "NTRS-20120013194",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 9,
+  "abstention_reason": null,
+  "trl_rationale": "Instrument commissioned and operating in mission mode, meeting all engineering requirements.",
+  "evidence": [
+    {
+      "trl_level": 9,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "The Aquarius instrument was commissioned two months after launch and began operating in mission mode August 25.",
+      "note": "operational use"
+    },
+    {
+      "trl_level": 9,
+      "document_id": "D001",
+      "page": 1,
+      "quote": "The Aquarius radiometer meets all engineering requirements, exhibited initial calibration biases within expected error bars, and continues to operate well.",
+      "note": "result vs requirements"
+    },
+    {
+      "trl_level": 9,
+      "document_id": "D001",
+      "page": 2,
+      "quote": "The instrument starting on the first day continues to produce high-quality antenna temperatures of the Earth",
+      "note": "operational result"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 1
+        },
+        {
+          "document_id": "D001",
+          "page": 2
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 1
+        }
+      ]
+    }
+  },
+  "review_notes": "Short 4-page conference abstract, but enough for a clear TRL 9."
+}

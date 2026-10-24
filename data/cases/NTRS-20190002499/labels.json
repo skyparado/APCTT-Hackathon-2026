@@ -1,0 +1,35 @@
+{
+  "case_id": "NTRS-20190002499",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 2,
+  "abstention_reason": null,
+  "trl_rationale": "Concept study only: science targets, mission architecture, analyses and simulated locomotion. No hardware built or tested. 'A proof-of-concept BALLET on Earth is possible' is a statement of possibility, not a test.",
+  "evidence": [
+    {
+      "trl_level": 2,
+      "document_id": "D001",
+      "page": 45,
+      "quote": "An entry, descent and landing architecture was developed for BALLET on Mars and Titan.",
+      "note": "concept/architecture formulated"
+    },
+    {
+      "trl_level": 2,
+      "document_id": "D001",
+      "page": 46,
+      "quote": "Coordinated control of the cable system and feet placement for locomotion, a problem unique to BALLET, has been shown to be algorithmically feasible.",
+      "note": "feasibility by analysis/simulation, not experiment"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "not met"
+    },
+    "DEMO-C02": {
+      "status": "not met"
+    }
+  },
+  "review_notes": "Trap on p.45: 'currently low-TRL technology' refers to thin-film photovoltaics, not BALLET itself. NTRS licence GOV_PERMITTED; pages carry a Caltech copyright line."
+}

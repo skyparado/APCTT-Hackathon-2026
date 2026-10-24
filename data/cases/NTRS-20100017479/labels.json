@@ -1,0 +1,52 @@
+{
+  "case_id": "NTRS-20100017479",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 4,
+  "abstention_reason": null,
+  "trl_rationale": "Full-scale structural test article built; materials and subassemblies proof-tested and inflation deployment demonstrated in the lab at low pressure. Full-pressure (9 psi) testing is still future work.",
+  "evidence": [
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 42,
+      "quote": "This was an extremely efficient deployment approach that was easily repeatable in the lab.",
+      "note": "lab deployment of full-scale unit"
+    },
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 33,
+      "quote": "The average tensile strength of the samples was 38,740lb, with a minimum breaking strength for a single seam sample of 18,690lb.",
+      "note": "component test result"
+    },
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 37,
+      "quote": "Each webbing was taken to 1.5 times the expected loading conditions in the fixture seen in Figure 5.7.",
+      "note": "proof testing"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 42
+        },
+        {
+          "document_id": "D001",
+          "page": 33
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "Trap p.47: 'Testing at the full pressure of 9 psi will answer many engineering and manufacturing questions' is future. 19.8 MB file, close to the 20 MiB per-document limit."
+}

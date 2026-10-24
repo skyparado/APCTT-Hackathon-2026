@@ -1,0 +1,35 @@
+{
+  "case_id": "NTRS-20160010587",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 2,
+  "abstention_reason": null,
+  "trl_rationale": "Feasibility established by modelling and cost analysis. The irradiation validation experiment had not been performed yet (planned, p.29). Only a surrogate sphere-fabrication rig was exercised, which is a side process, not the production concept.",
+  "evidence": [
+    {
+      "trl_level": 2,
+      "document_id": "D001",
+      "page": 34,
+      "quote": "In the Phase I NIAC grant, the CSNR has evaluated the feasibility of using a low power, commercially available nuclear reactor to produce 1.5 kg of Pu-238 per year.",
+      "note": "analytical feasibility"
+    },
+    {
+      "trl_level": 2,
+      "document_id": "D001",
+      "page": 34,
+      "quote": "The impact on the neutronics of the reactor have been assessed, the amount of Neptunium target material estimated, and the production rates calculated.",
+      "note": "modelling only"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "insufficient evidence"
+    },
+    "DEMO-C02": {
+      "status": "not met"
+    }
+  },
+  "review_notes": "Trap p.28: 'This experiment will provide a definitive proof of concept' is future tense. Consider TRL 3 only if you count the cerium-surrogate sol-gel rig (p.28) as proof of concept of the main process."
+}

@@ -1,0 +1,35 @@
+{
+  "case_id": "NTRS-20260001009",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 3,
+  "abstention_reason": null,
+  "trl_rationale": "Proof-of-concept articles were manufactured and the process scaled up, but no mechanical or functional testing is reported; the report says further testing is required.",
+  "evidence": [
+    {
+      "trl_level": 3,
+      "document_id": "D001",
+      "page": 19,
+      "quote": "Six propeller skins and three C-channel subcomponents were successfully fabricated in this manufacturing demonstration.",
+      "note": "proof-of-concept articles built"
+    },
+    {
+      "trl_level": 3,
+      "document_id": "D001",
+      "page": 19,
+      "quote": "The braided flax/PA-11 preform proved to be compatible with both autoclave and compression molding processes that are regularly used in commercial aerospace production.",
+      "note": "process feasibility shown"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "not met"
+    },
+    "DEMO-C02": {
+      "status": "not met"
+    }
+  },
+  "review_notes": "Trap p.19: 'Further characterization, development, and testing will be required'. LICENCE CHECK: NTRS marks this record MAY_INCLUDE_COPYRIGHT_MATERIAL."
+}

@@ -1,0 +1,58 @@
+{
+  "case_id": "NTRS-20110015223",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 6,
+  "abstention_reason": null,
+  "trl_rationale": "A proto-flight unit (representative system prototype) was built and tested in a thermal vacuum chamber (relevant environment) and met its success criteria, after breadboard lab and thermal-vacuum tests.",
+  "evidence": [
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 11,
+      "quote": "The MLHP proto-flight unit demonstrated successful start-up between 273K and 308K",
+      "note": "prototype in thermal vacuum"
+    },
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 12,
+      "quote": "This test also demonstrated once again that the loop could transport up to 120W of total heat load",
+      "note": "measured result"
+    },
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 13,
+      "quote": "The model predictions were in excellent agreement with the experimental data.",
+      "note": "model validated"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 11
+        },
+        {
+          "document_id": "D001",
+          "page": 12
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 5
+        }
+      ]
+    }
+  },
+  "review_notes": "Trap: p.1, p.2, p.13, p.14 state 'reached a TRL of 6' outright. Those sentences must never be used as evidence."
+}

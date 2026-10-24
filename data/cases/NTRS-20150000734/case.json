@@ -1,0 +1,23 @@
+{
+  "schema_version": "apctt-pdf-example-v1",
+  "input_profile": "pdf_report",
+  "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+  "case_id": "NTRS-20150000734",
+  "assessment_as_of": null,
+  "assessment_target": {
+    "target_id": "NTRS-20150000734-T1",
+    "type": "component",
+    "description": "General Dynamics S-band software defined radio running the launch waveform on the SCaN Testbed"
+  },
+  "intended_application": "TDRSS space communications for NASA missions",
+  "intended_environment": "Low Earth orbit (International Space Station)",
+  "title": "General Dynamic (GD) Launch Waveform On-Orbit Performance Report",
+  "documents": [
+    {
+      "document_id": "D001",
+      "file": "D001.pdf",
+      "title": "General Dynamic (GD) Launch Waveform On-Orbit Performance Report",
+      "document_date": "2014-12-01"
+    }
+  ]
+}

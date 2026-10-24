@@ -1,0 +1,23 @@
+{
+  "schema_version": "apctt-pdf-example-v1",
+  "input_profile": "pdf_report",
+  "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+  "case_id": "NTRS-20110015223",
+  "assessment_as_of": null,
+  "assessment_target": {
+    "target_id": "NTRS-20110015223-T1",
+    "type": "subsystem",
+    "description": "Multi-evaporator miniature loop heat pipe (MLHP) thermal control system with thermoelectric converters"
+  },
+  "intended_application": "Thermal control for small spacecraft",
+  "intended_environment": "Small spacecraft in orbit",
+  "title": "Multi-Evaporator Miniature Loop Heat Pipe for Small Spacecraft Thermal Control: Validation Results - Part 2",
+  "documents": [
+    {
+      "document_id": "D001",
+      "file": "D001.pdf",
+      "title": "Multi-Evaporator Miniature Loop Heat Pipe for Small Spacecraft Thermal Control: Validation Results - Part 2",
+      "document_date": "2010-01-04"
+    }
+  ]
+}

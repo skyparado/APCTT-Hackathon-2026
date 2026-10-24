@@ -1,0 +1,52 @@
+{
+  "case_id": "NTRS-20110014980",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 4,
+  "abstention_reason": null,
+  "trl_rationale": "Breadboard powerplant integrated and characterised in the laboratory. Not tested in a relevant (reduced-gravity or thermal-vacuum) environment.",
+  "evidence": [
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 15,
+      "quote": "In general, the powerplant exhibited consistent and reproducible performance over time.",
+      "note": "integrated breadboard, lab"
+    },
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 15,
+      "quote": "Over the entire range of power levels applied, the passive water separator effectively separated the product water from the oxygen stream exiting the fuel cell maintaining stable performance over the entire 20-hr test period at each power level.",
+      "note": "measured lab result"
+    },
+    {
+      "trl_level": 4,
+      "document_id": "D001",
+      "page": 5,
+      "quote": "The breadboard powerplant uses a unique water separation mechanism to separate the product water from the oxygen reactant stream.",
+      "note": "what was built"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 15
+        },
+        {
+          "document_id": "D001",
+          "page": 5
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "not met"
+    }
+  },
+  "review_notes": "Negative result p.15: the 240-hr test shut down 72 hr early, so DEMO-C02 is marked not met."
+}

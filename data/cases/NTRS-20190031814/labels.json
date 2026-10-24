@@ -1,0 +1,52 @@
+{
+  "case_id": "NTRS-20190031814",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 7,
+  "abstention_reason": null,
+  "trl_rationale": "Algorithm integrated on a B-787 flight test aircraft and flown in five flight trials in real-world operations.",
+  "evidence": [
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 46,
+      "quote": "The implementation of the NASA ASTAR algorithm aboard a B787 flight test aircraft proved successful in real world operations.",
+      "note": "operational environment"
+    },
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 5,
+      "quote": "The ASTAR algorithm was integrated with the Boeing supplied B-787 ecoDemonstrator aircraft",
+      "note": "integrated on aircraft"
+    },
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 5,
+      "quote": "Initial results indicated arrival times within several seconds of accuracy of the planned termination point between two aircraft performing FIM in a real world environment.",
+      "note": "measured result"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 5
+        },
+        {
+          "document_id": "D001",
+          "page": 46
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "Trap: title says 'Proof-of-Concept' but this is a flight test. TRL 6 is arguable given only one day of trials."
+}

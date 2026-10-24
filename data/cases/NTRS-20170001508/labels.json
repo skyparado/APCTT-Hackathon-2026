@@ -1,0 +1,52 @@
+{
+  "case_id": "NTRS-20170001508",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 6,
+  "abstention_reason": null,
+  "trl_rationale": "Flight-sized engineering development unit, as close to flight as possible, through ascent vent, random vibration, thermal vacuum and full-scale deployments. But this is a 3-page abstract and reports no test results.",
+  "evidence": [
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 2,
+      "quote": "To physically test the system, the team developed a flight sized engineering development unit with design features as close to flight as possible.",
+      "note": "representative prototype"
+    },
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 2,
+      "quote": "The test suite included ascent vent, random vibration, functional deployments, thermal vacuum, and full sail deployments.",
+      "note": "relevant-environment tests"
+    },
+    {
+      "trl_level": 6,
+      "document_id": "D001",
+      "page": 3,
+      "quote": "The team completed several deployments of the sail system in preparation for flight at half scale (4m) and full scale (6.8m)",
+      "note": "full-scale deployments done"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 2
+        },
+        {
+          "document_id": "D001",
+          "page": 3
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "REVIEW: abstract only, no results. Consider abstained / insufficient evidence instead, or replace with the full paper."
+}

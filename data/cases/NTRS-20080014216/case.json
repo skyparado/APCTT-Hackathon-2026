@@ -1,0 +1,23 @@
+{
+  "schema_version": "apctt-pdf-example-v1",
+  "input_profile": "pdf_report",
+  "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+  "case_id": "NTRS-20080014216",
+  "assessment_as_of": null,
+  "assessment_target": {
+    "target_id": "NTRS-20080014216-T1",
+    "type": "system",
+    "description": "HiWAND high-rate bidirectional air-to-ground network link built from commercial off-the-shelf components"
+  },
+  "intended_application": "Network connectivity for flight research and airborne science",
+  "intended_environment": "Research aircraft in flight over the Western Aeronautical Test Range",
+  "title": "High-Rate Wireless Airborne Network Demonstration (HiWAND) Flight Test Results",
+  "documents": [
+    {
+      "document_id": "D001",
+      "file": "D001.pdf",
+      "title": "High-Rate Wireless Airborne Network Demonstration (HiWAND) Flight Test Results",
+      "document_date": "2008-03-01"
+    }
+  ]
+}

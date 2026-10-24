@@ -1,0 +1,35 @@
+{
+  "case_id": "NTRS-20140003189",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "abstained",
+  "trl": null,
+  "abstention_reason": "ambiguous scope",
+  "trl_rationale": "Mission design study that combines flight-proven heritage components with a newer, lower-maturity flight computer. No single technology is developed or tested, so the readiness depends on which element is assessed. If forced to rate the observatory as a whole, it would be TRL 2 (concept formulated).",
+  "evidence": [
+    {
+      "trl_level": 2,
+      "document_id": "D001",
+      "page": 58,
+      "quote": "The design team analyzed the mission and instrument requirements, and designed a spacecraft that enables the WFXT mission while using high heritage components.",
+      "note": "design study, no hardware"
+    },
+    {
+      "trl_level": 9,
+      "document_id": "D001",
+      "page": 31,
+      "quote": "Option 1 used L3 transmitter and receiver units, which have good heritage.",
+      "note": "mixed maturity: heritage parts"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "not met"
+    },
+    "DEMO-C02": {
+      "status": "not met"
+    }
+  },
+  "review_notes": "Deliberate abstention case. Alternative label: completed, TRL 2."
+}

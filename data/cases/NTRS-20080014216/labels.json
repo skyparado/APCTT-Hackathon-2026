@@ -1,0 +1,45 @@
+{
+  "case_id": "NTRS-20080014216",
+  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_on": "2026-10-24",
+  "label_origin": "team judgement from report text; draft by assistant, pending review",
+  "assessment_status": "completed",
+  "trl": 7,
+  "abstention_reason": null,
+  "trl_rationale": "Prototype system flight-tested on aircraft in its intended operating environment with measured throughput and range.",
+  "evidence": [
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 16,
+      "quote": "Flight 7 successfully demonstrated the HiWAND link out to a range of 160 miles at an altitude of 35,000 feet.",
+      "note": "prototype in operational environment"
+    },
+    {
+      "trl_level": 7,
+      "document_id": "D001",
+      "page": 18,
+      "quote": "For a range exceeding 150 miles, transmission control protocol throughput of 4.8 Mbps and user diagram protocol throughput of 4.9 Mbps were achieved using pulse code modulation / frequency modulation over a 5 Mbps telemetry link.",
+      "note": "measured result"
+    }
+  ],
+  "criteria": {
+    "DEMO-C01": {
+      "status": "met",
+      "pages": [
+        {
+          "document_id": "D001",
+          "page": 16
+        },
+        {
+          "document_id": "D001",
+          "page": 18
+        }
+      ]
+    },
+    "DEMO-C02": {
+      "status": "insufficient evidence"
+    }
+  },
+  "review_notes": "No formal acceptance criteria stated, hence DEMO-C02 insufficient evidence."
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "apctt-pdf-example-v1",
+  "input_profile": "pdf_report",
+  "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+  "case_id": "NTRS-20100017479",
+  "assessment_as_of": null,
+  "assessment_target": {
+    "target_id": "NTRS-20100017479-T1",
+    "type": "system",
+    "description": "Expandable hybrid habitat engineering development unit (softgoods center section with two rigid end caps)"
+  },
+  "intended_application": "Expandable habitable volume for human exploration",
+  "intended_environment": "Space and planetary surfaces",
+  "title": "Intelligent Flexible Materials for Space Structures: Expandable Habitat Engineering Development Unit",
+  "documents": [
+    {
+      "document_id": "D001",
+      "file": "D001.pdf",
+      "title": "Intelligent Flexible Materials for Space Structures: Expandable Habitat Engineering Development Unit",
+      "document_date": "2010-03-01"
+    }
+  ]
+}
