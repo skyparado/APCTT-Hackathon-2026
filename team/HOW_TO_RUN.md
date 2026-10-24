@@ -61,6 +61,18 @@ output). `result_origin: "supervisor"` means the server **replaced** our output 
 see below. Use a **new `request_id`** after any code change, or you get `409 REQUEST_ID_CONFLICT`
 (a request_id is bound to the case + config + package hash).
 
+## Regression run over every labelled case (Task 16)
+
+With the server running on our module:
+
+```bash
+~/apctt-env/bin/python data/build_cases.py              # builds request.json, checks every quote is on its page
+~/apctt-env/bin/python team/regress.py --save run.json  # A (TRL), B (criteria), quote validity, timings
+```
+
+Run it after every change and compare `run.json` files. `team/eval_trl.py` scores the TRL logic alone on
+the labels' gold quotes (no server), which is an upper bound, not the real score.
+
 ## Verify the module without the server (fast loop)
 
 ```bash

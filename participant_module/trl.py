@@ -35,25 +35,31 @@ _CUES: dict[int, tuple[str, ...]] = {
         r"\bsurrogate\b", r"\bwas tested\b"),
     4: (r"\bbreadboard\b", r"\bin the lab(oratory)?\b", r"\bcomponent test", r"tensile strength",
         r"\bproof[- ]?test", r"times the expected load", r"\bsubscale\b"),
-    5: (r"thermal[- ]vacuum", r"\bvibration\b", r"relevant environment", r"qualification-level",
+    5: (r"thermal[- ]vacuum (test|chamber|testing)", r"\b(random )?vibration (test|testing|tests)\b",
+        r"random vibration", r"relevant environment", r"qualification-level",
         r"environmental test", r"representative of anticipated mission"),
-    6: (r"proto-?flight", r"engineering (development|model) unit", r"flight[- ]sized",
+    # A named unit only counts when the sentence also says it was tested.
+    6: (r"proto-?flight", r"engineering (development|model) unit\b.*\btest", r"flight[- ]sized",
         r"system[- ]level test", r"prototype (was )?demonstrated"),
-    7: (r"\bflight test", r"\bflight trials?\b", r"\bon-orbit\b", r"real world (operations|environment)",
-        r"operational environment", r"international space station", r"\baltitude of\b"),
+    7: (r"\bflight test(s|ed|ing)?\b(?! aircraft model)", r"\bflight trials?\b", r"\bon-orbit\b",
+        r"real world (operations|environment)", r"operational environment", r"international space station",
+        r"\baltitude of\b"),
     8: (r"flight[- ]qualified", r"qualification (testing|program) (was )?(completed|passed)", r"\bcertified\b"),
-    9: (r"mission mode", r"successful landing", r"continues to operate", r"operational use", r"\bin service\b"),
+    9: (r"mission mode", r"successful landing", r"continues to operate", r"\bin operational use\b"),
 }
 _CUE_RE = {level: re.compile("|".join(pats), re.IGNORECASE) for level, pats in _CUES.items()}
 
-# A sentence whose content is a TRL claim is never evidence (PROBLEM_DESCRIPTION 13.4).
-_TRL_CLAIM = re.compile(r"\bTRLs?\b|technology readiness level", re.IGNORECASE)
-# Intent, possibility and requirements describe what has not happened yet.
+# A sentence whose content is a readiness claim is never evidence (PROBLEM_DESCRIPTION 13.4);
+# manufacturing readiness levels (MRL) are claims too.
+_TRL_CLAIM = re.compile(r"\b[TM]RLs?\b|readiness level", re.IGNORECASE)
+# Intent, possibility, conditions and requirements describe what has not happened yet.
 _NOT_DONE = re.compile(
     r"\b(will|shall|would|could|might|plans? to|planned|is planned|future work|aims? to|"
-    r"intends? to|proposed|is possible|will be required|to be tested)\b",
+    r"intends? to|proposed|is possible|will be required|to be tested|if|in order to|potential)\b",
     re.IGNORECASE,
 )
+# Title blocks and running headers repeat the report number; they name things, never test them.
+_FRONT_MATTER = re.compile(r"\bNASA/(TM|CR|TP|SP)\b")
 _FAILED = re.compile(r"\b(failed|did not (meet|reach|pass)|was not achieved|shut down|anomal)", re.IGNORECASE)
 # Heritage describes parts proven elsewhere, not the assessed target (cheat-sheet trap 4).
 _HERITAGE = re.compile(r"\bheritage\b", re.IGNORECASE)
@@ -64,7 +70,8 @@ ABSTAIN_SCOPE = "ambiguous scope"
 
 def level_cues(sentence: str) -> set[int]:
     """TRL levels this sentence is evidence for; empty if it is a claim, a plan or a failure."""
-    if _TRL_CLAIM.search(sentence) or _NOT_DONE.search(sentence) or _FAILED.search(sentence):
+    if (_TRL_CLAIM.search(sentence) or _NOT_DONE.search(sentence) or _FAILED.search(sentence)
+            or _FRONT_MATTER.search(sentence)):
         return set()
     return {level for level, rx in _CUE_RE.items() if rx.search(sentence)}
 
@@ -155,6 +162,10 @@ def _self_check() -> None:
     assert level_cues("The panel will be tested in a thermal vacuum chamber.") == set()
     assert level_cues("A proof-of-concept BALLET on Earth is possible with a moderately sized balloon.") == set()
     assert level_cues("The prototype failed to reach the target efficiency.") == set()
+    assert level_cues("These materials offer vibration damping and noise mitigation.") == set()
+    assert level_cues("The aircraft model in service in 2014 was conducive for such an implementation.") == set()
+    assert level_cues("NASA/CR-2010-216682 Expandable Habitat Engineering Development Unit test report") == set()
+    assert level_cues("To advance from proof-of-concept (MRL 3) to production (MRL 6), the process must be repeated.") == set()
     # real evidence does
     assert 5 in level_cues("The unit was tested in a thermal vacuum chamber from -40 C to +85 C.")
     assert 7 in level_cues("Flight 7 successfully demonstrated the link out to a range of 160 miles at an altitude of 35,000 feet.")
