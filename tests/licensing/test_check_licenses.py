@@ -32,8 +32,12 @@ CATALOG = ROOT / "contracts" / "model-catalog.json"
 QWEN_15B = "Qwen/Qwen2.5-1.5B-Instruct"
 QWEN_15B_REVISION = "989aa7980e4cf806f80c7fef2b1adb7bc71aa306"
 QWEN_15B_ID = "qwen2.5-1.5b-instruct"
-MIT_TEXT = "MIT License\n\nCopyright (c) 2026 Example Team\n\nPermission is hereby granted...\n"
-APACHE_TEXT = "Apache License\nVersion 2.0, January 2004\n"
+# The kit's licence texts: D72 checks that participant_module/LICENSE holds the MIT text.
+MIT_TEXT = (
+    (ROOT / "licenses/MIT.txt").read_text().replace("<year> <copyright holders>", "2026 Team")
+)
+APACHE_TEXT = (ROOT / "licenses/Apache-2.0.txt").read_text()
+SHORT_MIT = "MIT License\n\nCopyright (c) 2026 Example Team\n\nPermission is hereby granted...\n"
 NON_COMMERCIAL_TEXT = "Bundled data: for non-commercial research purposes only.\n"
 COMMONS_CLAUSE_TEXT = '"Commons Clause" License Condition v1.0\nno right to Sell the Software.\n'
 AGPL_PLUS = "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)"
@@ -284,15 +288,26 @@ def policy_with(tmp_path: Path, packages: list[dict[str, Any]]) -> Path:
 def test_policy_states_the_confirmed_rules(policy: Any) -> None:
     raw = json.loads(POLICY.read_text(encoding="utf-8"))
     assert raw["policy_version"] == "apctt-license-policy-v2"
-    assert raw["version"] == "0.3.0"
+    assert raw["version"] == "0.4.0"
     assert "2026-10-10" in raw["status"] and "confirmed" in raw["status"]
+    assert "D72" in raw["status"] and "2026-10-13" in raw["status"]
+    assert raw["updated"] == "2026-10-13"
     # D63: no exceptions and no advance rulings; review items are decided after the submission.
     for text in (json.dumps(raw["statuses"]), json.dumps(raw["models"]), raw["datasets"]["note"]):
         assert "written exception" not in text and "unless the organizer" not in text, text
     assert "after the submission" in raw["statuses"]["review"]
-    assert "not legal advice" in raw["notice"].lower() and "SPEC-14" in raw["notice"]
-    assert raw["team_license"]["allowed"] == ["Apache-2.0", "MIT"]
-    assert "team_license" not in json.dumps(raw["to_confirm"])
+    assert "legal advice" not in raw["notice"].lower() and "SPEC-14" in raw["notice"]  # D79
+    assert "HQ decides flagged items after submission" in raw["notice"]
+    assert "person" not in raw["statuses"]["review"] and "HQ decides" in raw["statuses"]["review"]
+    # D72 (2026-10-13): the team's own work is MIT only; third parties keep their licences.
+    assert raw["team_license"]["allowed"] == ["MIT"]
+    team = raw["team_license"]
+    for key in ("bundle", "web", "rule"):
+        assert "Apache-2.0 or MIT" not in team[key], key
+    assert "D72" in team["rule"] and "Apache-2.0 is no longer accepted" in team["rule"]
+    assert "own licences" in team["rule"] and "NOTICE" in team["rule"]
+    assert "team_license" not in json.dumps(raw["settled"])
+    assert raw["models"]["allowed_licenses"] == ["Apache-2.0", "MIT"]  # catalogue models (D64)
     lists = raw["licenses"]
     allow = set(lists["allow"]) | set(lists["allow_with_conditions"])
     assert not allow & set(lists["review"]) and not allow & set(lists["deny"])
@@ -307,17 +322,20 @@ def test_policy_states_the_confirmed_rules(policy: Any) -> None:
     assert exceptions["Classpath-exception-2.0"]["status"] == "review"
     assert exceptions["Font-exception-2.0"]["status"] == "allowed"
     assert "pdfjs-dist" in exceptions["Font-exception-2.0"]["note"]
-    # Repair round 1: an allowed or review exception names the GPL bases it lifts, and the two
-    # GPL carve-outs are a builder addition that the organizer has not confirmed yet.
+    # Repair round 1: an allowed or review exception names the GPL bases it lifts; the two GPL
+    # carve-outs were a builder addition, adopted as rules by decision D81.
     for name, exception in exceptions.items():
         if exception["status"] in ("allowed", "review"):
             assert exception["bases"] and all(b.startswith("GPL-") for b in exception["bases"])
-    pending = " ".join(raw["to_confirm"])
-    assert "GCC-exception-3.1" in pending and "Font-exception-2.0" in pending
+    settled = " ".join(raw["settled"])
+    assert "GCC-exception-3.1" in settled and "Font-exception-2.0" in settled and "D81" in settled
+    for name in ("GCC-exception-3.1", "Font-exception-2.0", "Classpath-exception-2.0"):
+        assert exceptions[name]["decision"] == "D81", name
     # Repair round 2: Classpath-exception-2.0 (review on GPL-2.0) is a builder addition too, and
-    # Elastic-2.0 (review; it bars offering the software as a hosted service) is a question for the
-    # organizer under rule 3.
-    assert "Classpath-exception-2.0" in pending and "Elastic-2.0" in pending
+    # Elastic-2.0 (review; it bars offering the software as a hosted service) stays review, decided
+    # by HQ after the submission (D81).
+    assert "Classpath-exception-2.0" in settled and "Elastic-2.0" in settled
+    assert "settled" in raw and "builder_addition" not in json.dumps(exceptions)
     # Repair round 2: Commons Clause is refused as a plain identifier too.
     assert "Commons-Clause" in lists["deny"]
     rules = {name: rule for rule in raw["packages"] for name in rule["names"]}
@@ -508,8 +526,8 @@ def test_declared_strings(policy: Any, raw: str, expression: str | None, status:
 )
 def test_unambiguous_apache_and_mit_spellings(policy: Any, raw: str, expression: str) -> None:
     assert policy.normalise(raw) == expression, raw
-    assert policy.verdict(expression)[0] == "allowed"
-    assert policy.team_cleared(expression)
+    assert policy.verdict(expression)[0] == "allowed"  # both stay allowed for third parties
+    assert policy.team_cleared(expression) == (expression == "MIT")  # the team: MIT only (D72)
 
 
 @pytest.mark.parametrize(
@@ -911,9 +929,12 @@ def test_common_cuda_base_in_a_web_system(
     ("declared", "text", "status"),
     [
         ("MIT", MIT_TEXT, "allowed"),
-        ("Apache-2.0", APACHE_TEXT, "allowed"),
+        ("Apache-2.0", APACHE_TEXT, "denied"),  # D72: MIT only for the team's own work
         ("mit", MIT_TEXT, "allowed"),
-        ("MIT", APACHE_TEXT, "allowed"),  # presence only: the text is not read
+        ("MIT", APACHE_TEXT, "denied"),  # D72: the LICENSE must hold the MIT text
+        ("MIT", SHORT_MIT, "denied"),  # the permission and warranty paragraphs are missing
+        ("MIT", MIT_TEXT.upper().replace("\n", "\n  "), "allowed"),  # case, line breaks, spaces
+        ("MIT", MIT_TEXT.replace('"', "\u201c"), "allowed"),  # typographic quotes
         ("BSD-3-Clause", MIT_TEXT, "denied"),
         ("GPL-3.0-only", MIT_TEXT, "denied"),
         ("LicenseRef-Proprietary", MIT_TEXT, "denied"),
@@ -923,11 +944,13 @@ def test_common_cuda_base_in_a_web_system(
         ("Apache-2.0 WITH Commons-Clause", APACHE_TEXT, "denied"),
         ("Apache-2.0 WITH LLVM-exception", APACHE_TEXT, "denied"),
         ("MIT WITH Font-exception-2.0", MIT_TEXT, "denied"),
-        ("MIT OR Apache-2.0", MIT_TEXT, "allowed"),  # either licence, both allowed
+        ("MIT OR Apache-2.0", MIT_TEXT, "denied"),  # D72: declare MIT alone
+        ("Apache-2.0 AND MIT", MIT_TEXT, "denied"),
         (None, MIT_TEXT, "denied"),
         ("MIT", None, "denied"),
         ("MIT", "  \n", "denied"),
     ],
+    ids=lambda value: " ".join(value.split())[:24] if isinstance(value, str) else None,
 )
 def test_team_licence_in_a_bundle(
     tool: ModuleType,
@@ -942,6 +965,49 @@ def test_team_licence_in_a_bundle(
     team = item(report, "participant_module", "team")
     assert team["status"] == status, team
     assert code == {"allowed": 0, "denied": 1}[status]
+
+
+def test_apache_is_refused_for_the_team_licence_with_a_clear_message(
+    tool: ModuleType, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """D72 (2026-10-13): the team's own work is MIT only. A team that still declares Apache-2.0
+    (allowed until 0.4.0) is told what changed; third-party components keep their licences."""
+    apache = {"team_license": "Apache-2.0", "license_text": APACHE_TEXT}
+    bundle = make_bundle(tmp_path / "submission", **apache)
+    code, report = run(tool, capsys, "--bundle", str(bundle))
+    team = item(report, "participant_module", "team")
+    reasons = " ".join(team["reasons"])
+    assert team["status"] == "denied" and code == 1
+    for phrase in ("must be MIT", "D72", "Apache-2.0 is no longer accepted for the team's own work",
+                   "participant_module/LICENSE"):  # fmt: skip
+        assert phrase in reasons, (phrase, reasons)
+    web = make_web(tmp_path / "web", license_text=APACHE_TEXT)
+    (web / "package.json").write_text(json.dumps({"name": "ui", "license": "Apache-2.0"}))
+    code, report = run(tool, capsys, "--web", str(web))
+    team = item(report, "web system", "team")
+    assert team["status"] == "denied" and code == 1
+    assert "Apache-2.0 is no longer accepted" in " ".join(team["reasons"]), team
+    missing = make_web(tmp_path / "no-licence", license_text=None)
+    code, report = run(tool, capsys, "--web", str(missing))
+    assert "add the MIT text" in " ".join(item(report, "web system", "team")["reasons"])
+
+
+def test_weights_derived_from_a_catalogue_model_keep_its_licence(
+    tool: ModuleType, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """D72: weights fine-tuned from a catalogue model are the team's own work under MIT and stay
+    subject to that model's licence: the item says to keep its LICENSE and NOTICE."""
+    bundle = make_bundle(
+        tmp_path / "submission",
+        models=[{"name": "ours", "team_trained": True, "base_model": QWEN_15B_ID,
+                 "path": "assets"}],
+    )  # fmt: skip
+    code, report = run(tool, capsys, "--bundle", str(bundle))
+    found = item(report, "ours", "model")
+    conditions = " ".join(found["conditions"])
+    assert found["status"] == "allowed" and code == 0, found
+    assert QWEN_15B_ID in conditions and "Apache-2.0" in conditions, conditions
+    assert "keep its LICENSE and NOTICE" in conditions, conditions
 
 
 def test_bundle_without_a_readable_submission_json_is_denied(
@@ -961,10 +1027,10 @@ def test_team_licence_of_a_web_system(
     tool: ModuleType, capsys: pytest.CaptureFixture[str], tmp_path: Path
 ) -> None:
     good = make_web(tmp_path / "good")
-    (good / "package.json").write_text(json.dumps({"name": "ui", "license": "Apache-2.0"}))
+    (good / "package.json").write_text(json.dumps({"name": "ui", "license": "MIT"}))
     code, report = run(tool, capsys, "--web", str(good))
     team = item(report, "web system", "team")
-    assert team["status"] == "allowed" and team["license"] == "Apache-2.0", team
+    assert team["status"] == "allowed" and team["license"] == "MIT", team
     assert code == 0, statuses(report)
 
     missing = make_web(tmp_path / "missing", license_text=None)
@@ -981,7 +1047,7 @@ def test_team_licence_of_a_web_system(
     assert team["status"] == "denied" and "frontend/package.json" in " ".join(team["reasons"])
     assert code == 1
 
-    # Repair round 1: Apache-2.0 or MIT with an exception is not Apache-2.0 or MIT.
+    # Repair round 1: MIT with an exception is not MIT (and Apache-2.0 is refused, D72).
     for index, declared in enumerate(("MIT WITH Commons-Clause", "Apache-2.0 WITH LLVM-exception")):
         excepted = make_web(tmp_path / f"exception-{index}")
         (excepted / "package.json").write_text(json.dumps({"name": "ui", "license": declared}))
@@ -1105,6 +1171,9 @@ def test_team_licence_of_a_web_system(
         ),
         ({"name": "ours", "team_trained": True, "license": "cc-by-nc-4.0", "path": "a"}, "denied"),
         ({"name": "ours", "team_trained": True, "license": "BSD-3-Clause", "path": "a"}, "denied"),
+        # D72: the team's own weights are MIT only, like its code.
+        ({"name": "ours", "team_trained": True, "license": "Apache-2.0", "path": "a"}, "denied"),
+        ({"name": "ours", "team_trained": True, "license": "MIT", "path": "assets"}, "allowed"),
         # D64: a fine-tune of a model outside the catalogue is refused, of a catalogue model fine.
         ({"name": "ours", "team_trained": True, "repo": "example-org/base", "path": "a"}, "denied"),
         (
@@ -1538,7 +1607,7 @@ def test_npm_workspaces_are_read_once(
     assert names == ["react"], report["items"]
     assert item(report, "web system", "team")["status"] == "allowed"
     assert code == 0, statuses(report)
-    # A workspace under a licence other than Apache-2.0 or MIT is the team's licence problem.
+    # A workspace under a licence other than MIT is the team's licence problem (D72).
     lock = json.loads((web / "package-lock.json").read_text())
     lock["packages"]["packages/ui"]["license"] = "BSD-3-Clause"
     (web / "package-lock.json").write_text(json.dumps(lock))
@@ -1967,7 +2036,8 @@ def test_cli_exit_codes_table_and_notices(tmp_path: Path) -> None:
 
     ok = cli("--bundle", str(clean))
     assert ok.returncode == 0, ok.stdout + ok.stderr
-    assert "not legal advice" in ok.stdout
+    assert "legal advice" not in ok.stdout  # D79: no disclaimer wording
+    assert "HQ decides flagged items after submission" in ok.stdout
     assert re.search(r"^status\s+kind\s+component\s+version\s+licence", ok.stdout, re.M)
     assert re.search(r"^allowed\s+wheel\s+examplelib\s+1\.0\s+MIT", ok.stdout, re.M)
     assert "summary: 2 allowed, 0 review, 0 denied -> exit 0" in ok.stdout
@@ -1986,7 +2056,8 @@ def test_cli_exit_codes_table_and_notices(tmp_path: Path) -> None:
     assert both.returncode == 0, both.stdout
     report = json.loads(both.stdout)
     assert {i["scope"] for i in report["items"]} == {"bundle", "web"}
-    assert report["policy"]["version"] == "0.3.0" and report["exit_code"] == 0
+    assert report["policy"]["version"] == json.loads(POLICY.read_text())["version"]
+    assert report["policy"]["version"] == "0.4.0" and report["exit_code"] == 0
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
     assert report["catalog"]["version"] == catalog["catalog_version"]
     assert len(report["catalog"]["sha256"]) == 64
@@ -2058,3 +2129,65 @@ def test_licensing_guide_example_is_accepted(
     assert "python tools/check_licenses.py --bundle" in text
     for option in ("--web", "--json", "--notices"):
         assert option in text
+
+
+def test_the_licence_file_must_hold_the_mit_text_d72(
+    tool: ModuleType, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """D72: with "license": "MIT", participant_module/LICENSE (and the LICENSE at the root of the
+    web code) must contain the MIT text: its permission, condition and warranty paragraphs, matched
+    after normalising case, quotes, punctuation and white space. The Apache-2.0 text is refused
+    with a message that says so; the MIT text followed by the Apache-2.0 text is a review item."""
+    bundle = make_bundle(tmp_path / "apache", license_text=APACHE_TEXT)
+    code, report = run(tool, capsys, "--bundle", str(bundle))
+    team = item(report, "participant_module", "team")
+    reasons = " ".join(team["reasons"])
+    assert team["status"] == "denied" and code == 1
+    for phrase in ("participant_module/LICENSE holds the Apache License 2.0 text", "D72",
+                   "licenses/MIT.txt"):  # fmt: skip
+        assert phrase in reasons, (phrase, reasons)
+    other = make_bundle(tmp_path / "other", license_text="All rights reserved by Team 01.\n")
+    code, report = run(tool, capsys, "--bundle", str(other))
+    reasons = " ".join(item(report, "participant_module", "team")["reasons"])
+    assert code == 1 and "does not contain the MIT licence text" in reasons, reasons
+    both = make_bundle(tmp_path / "both", license_text=MIT_TEXT + "\n" + APACHE_TEXT)
+    code, report = run(tool, capsys, "--bundle", str(both))
+    team = item(report, "participant_module", "team")
+    assert team["status"] == "review" and code == 2, team
+    assert "also holds the Apache License 2.0 text" in " ".join(team["reasons"])
+    web = make_web(tmp_path / "web", license_text=APACHE_TEXT)
+    code, report = run(tool, capsys, "--web", str(web))
+    team = item(report, "web system", "team")
+    assert team["status"] == "denied" and code == 1
+    assert "web code holds the Apache License 2.0 text" in " ".join(team["reasons"]), team
+    good = make_web(tmp_path / "good-web")
+    code, report = run(tool, capsys, "--web", str(good))
+    assert item(report, "web system", "team")["status"] == "allowed", report
+
+
+def test_a_utf16_licence_file_is_read_and_other_encodings_are_named(
+    tool: ModuleType, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """D72 text check: an editor may save the MIT text as UTF-16 with a byte order mark (Windows
+    Notepad "Unicode"); it is read as such and passes. A file that still does not hold the MIT text
+    is refused with a message that names the expected encoding (UTF-8 text)."""
+    for name, data in (
+        ("utf16-le", MIT_TEXT.replace("\n", "\r\n").encode("utf-16")),
+        ("utf16-be", "﻿".encode("utf-16-be") + MIT_TEXT.encode("utf-16-be")),
+        ("utf8-bom", "﻿".encode() + MIT_TEXT.replace("\n", "\r\n").encode()),
+    ):
+        bundle = make_bundle(tmp_path / name)
+        (bundle / "participant_module" / "LICENSE").write_bytes(data)
+        code, report = run(tool, capsys, "--bundle", str(bundle))
+        assert item(report, "participant_module", "team")["status"] == "allowed", (name, report)
+        assert code == 0, name
+        web = make_web(tmp_path / f"web-{name}")
+        (web / "LICENSE").write_bytes(data)
+        code, report = run(tool, capsys, "--web", str(web))
+        assert item(report, "web system", "team")["status"] == "allowed", (name, report)
+    other = make_bundle(tmp_path / "latin-1")
+    (other / "participant_module" / "LICENSE").write_bytes("Licence \xe9crite.\n".encode("latin-1"))
+    code, report = run(tool, capsys, "--bundle", str(other))
+    reasons = " ".join(item(report, "participant_module", "team")["reasons"])
+    assert code == 1 and "does not contain the MIT licence text" in reasons, reasons
+    assert "saved as UTF-8 text" in reasons, reasons

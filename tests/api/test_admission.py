@@ -54,10 +54,16 @@ def test_ac01_real_worker_submit_poll(tmp_path: Path) -> None:
         assert job.result_origin == "module" and job.result is not None
         result = body["result"]
         assert result["assessment_status"] == "abstained"
-        assert result["criterion_status"] == {
-            "DEMO-C01": "met",
-            "DEMO-C02": "insufficient evidence",
-        }
+        # config/dev.json runs the official checklist (D74); the example finds "tested" (C04).
+        assert result["checklist_version"] == "APCTT-2026-CHECKLIST-v1"
+        assert result["criterion_status"]["APCTT-C04"] == "met"
+        assert set(result["criterion_status"]) == {f"APCTT-C{n:02d}" for n in range(1, 13)}
+        assert sum(v == "met" for v in result["criterion_status"].values()) == 1
+        example = json.loads(
+            (Path(__file__).resolve().parents[2] / "docs/EXAMPLE_RESPONSE.json").read_text()
+        )
+        for key in ("criterion_status", "evidence_reference", "missing_evidence"):
+            assert result[key] == example["result"][key], key
         assert result["assessment_target"] == EXAMPLE_REQUEST["case"]["assessment_target"]
         expected_hash = json.loads(
             (Path(__file__).resolve().parents[2] / "docs/EXAMPLE_RESPONSE.json").read_text()
@@ -128,7 +134,7 @@ def test_ac05_request_errors_and_stream_cap(tmp_path: Path) -> None:
         assert paths == {"case.title", "case.<unknown-field>"}
         error(post(client, request(schema_version="apctt-v04")), 422, "VERSION_MISMATCH")
         mismatch = post(client, request(checklist_version="OFFICIAL-1")).json()
-        assert mismatch["error"]["field_errors"][0]["expected"] == "DEMO-CHECKLIST-NOT-OFFICIAL"
+        assert mismatch["error"]["field_errors"][0]["expected"] == "APCTT-2026-CHECKLIST-v1"
         error(post(client, request(input_profile="raw_pdf")), 422, "UNSUPPORTED_INPUT_PROFILE")
 
         # Size cap with an honest Content-Length and with a chunked body that has none.
@@ -358,7 +364,7 @@ def test_pdf_admission_checks_and_storage(tmp_path: Path) -> None:
         assert accepted.status_code == 202
         body = wait_finished(client, accepted.headers["Location"])
         assert body["result_origin"] == "module"
-        assert body["result"]["evidence_reference"]["DEMO-C01"][0]["page"] == 1
+        assert body["result"]["evidence_reference"]["APCTT-C04"][0]["page"] == 1
 
     digest = EXAMPLE_REQUEST["case"]["documents"][0]["sha256"]
     stored_pdf = loaded.data_dir / "documents" / f"{digest}.pdf"
