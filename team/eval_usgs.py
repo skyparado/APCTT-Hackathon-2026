@@ -20,8 +20,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from participant_module.adapter import _read_pages, _sentences  # noqa: E402
-from participant_module.trl import Decision, decide, score_a  # noqa: E402
+from participant_module.adapter import _read_pages  # noqa: E402
+from participant_module.trl import Decision, score_a  # noqa: E402
+from participant_module.trl_usgs import decide_from_signals, inspect  # noqa: E402
 
 DEFAULT_PDF_DIR = Path.home() / "public_cases" / "pdf"
 PUBLIC_CASES_TOOL = (
@@ -42,6 +43,10 @@ CSV_FIELDS = (
     "abstention_reason",
     "part_a",
     "runtime_seconds",
+    "confidence",
+    "fold",
+    "signals_7",
+    "signals_5",
     "error",
 )
 
@@ -98,33 +103,28 @@ def _score(prediction: int | None, abstained: bool, estimated: int) -> float:
 
 
 def _run_case(
-    case_id: str,
-    metadata: dict[str, Any],
     pdf_path: Path,
-) -> tuple[Decision, float, str | None]:
+) -> tuple[list[str], float, str | None]:
     started = time.monotonic()
-    pages_by_sentence: dict[str, tuple[str, int]] = {}
     error: str | None = None
+    pages: list[str] = []
     try:
         import pypdfium2
 
         pages = _read_pages(pypdfium2, str(pdf_path))
-        for page_number, page_text in enumerate(pages, start=1):
-            for sentence in _sentences(page_text):
-                pages_by_sentence.setdefault(sentence, ("D001", page_number))
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         traceback.print_exc()
 
-    target_type = str(metadata.get("type", ""))
-    decision = decide(pages_by_sentence, target_type)
-    return decision, time.monotonic() - started, error
+    return pages, time.monotonic() - started, error
 
 
-def _format_prediction(decision: Decision) -> str:
-    if decision.status == "completed":
-        return f"TRL {decision.predicted_trl}"
-    return f"abstain ({decision.abstention_reason})"
+def _predict(features: dict[str, Any], threshold_7: int, threshold_5: int) -> int | None:
+    return decide_from_signals(
+        features,
+        threshold_7=threshold_7,
+        threshold_5=threshold_5,
+    )[0]
 
 
 def _baseline_mean(rows: list[dict[str, Any]], prediction: int | None) -> float:
@@ -134,6 +134,33 @@ def _baseline_mean(rows: list[dict[str, Any]], prediction: int | None) -> float:
     return sum(
         _score(prediction, abstained, row["estimated_trl"]) for row in rows
     ) / len(rows)
+
+
+def _tune_thresholds(rows: list[dict[str, Any]]) -> tuple[float, float, float]:
+    if not rows:
+        raise RuntimeError("No tuning-fold cases are available.")
+    threshold_7_options = sorted({1, *(row["features"]["score_7"] + 1 for row in rows)})
+    threshold_5_options = sorted({1, *(row["features"]["score_5"] + 1 for row in rows)})
+    best_key: tuple[float, int, int] | None = None
+    best_thresholds: tuple[int, int] | None = None
+    for threshold_7 in threshold_7_options:
+        for threshold_5 in threshold_5_options:
+            mean = sum(
+                _score(
+                    _predict(row["features"], threshold_7, threshold_5),
+                    not row["features"]["has_text"],
+                    row["estimated_trl"],
+                )
+                for row in rows
+            ) / len(rows)
+            # Prefer stricter thresholds if training-fold scores tie.
+            key = (mean, threshold_7 + threshold_5, threshold_7)
+            if best_key is None or key > best_key:
+                best_key = key
+                best_thresholds = (threshold_7, threshold_5)
+    if best_key is None or best_thresholds is None:
+        raise RuntimeError("Could not tune signal thresholds.")
+    return best_thresholds[0], best_thresholds[1], best_key[0]
 
 
 def _write_csv(rows: list[dict[str, Any]]) -> None:
@@ -164,6 +191,11 @@ def main() -> int:
         default=42,
         help="random seed used with --limit (default: 42)",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="print the fired TRL 7 and TRL 5 signal groups for every case",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be at least 1")
@@ -175,81 +207,131 @@ def main() -> int:
         print(f"Unable to load USGS labels or case metadata: {exc}", file=sys.stderr)
         return 2
 
-    available = [
+    pdf_cases = [
         case_id
         for case_id in sorted(labels)
         if (args.pdf_dir / f"{case_id}.pdf").is_file()
     ]
-    if args.limit is not None and args.limit < len(available):
-        available = sorted(random.Random(args.seed).sample(available, args.limit))
-    skipped = len(labels) - len(available)
+    skipped = len(labels) - len(pdf_cases)
+    available = pdf_cases
+    if args.limit is not None and args.limit < len(pdf_cases):
+        available = sorted(random.Random(args.seed).sample(pdf_cases, args.limit))
 
     rows: list[dict[str, Any]] = []
-    print(f"Evaluating {len(available)} cases; skipped without PDF: {skipped}")
+    print(
+        f"Evaluating {len(available)} cases from {len(pdf_cases)} available PDFs; "
+        f"skipped without PDF: {skipped}"
+    )
     for case_id in available:
         label = labels[case_id]
         case_meta = metadata.get(case_id, {})
-        decision, elapsed, error = _run_case(
-            case_id,
-            case_meta,
+        pages, elapsed, error = _run_case(
             args.pdf_dir / f"{case_id}.pdf",
         )
-        prediction = decision.predicted_trl if decision.status == "completed" else None
+        features = inspect(pages)
+        case_number = int(case_id.rsplit("-", 1)[1])
         estimated = label["estimated_trl"]
-        part_a = _score(prediction, decision.status != "completed", estimated)
         rows.append(
             {
                 "case_id": case_id,
                 "title": case_meta.get("title", ""),
                 "estimated_trl": estimated,
-                "predicted_trl": prediction,
-                "status": decision.status,
-                "abstention_reason": decision.abstention_reason,
-                "part_a": part_a,
+                "case_number": case_number,
+                "fold": "odd" if case_number % 2 else "even",
+                "features": features,
                 "runtime_seconds": elapsed,
                 "error": error,
-                "decision": decision,
             }
         )
+
+    tuning_rows = [row for row in rows if row["fold"] == "odd"]
+    heldout_rows = [row for row in rows if row["fold"] == "even"]
+    if not tuning_rows or not heldout_rows:
         print(
-            f"{case_id}: predicted={_format_prediction(decision)} "
-            f"estimated=TRL {estimated} A={part_a:.2f} runtime={elapsed:.2f}s"
-            + (f" error={error}" if error else "")
+            "Evaluation needs at least one available odd-numbered tuning case "
+            "and one even-numbered held-out case.",
+            file=sys.stderr,
+        )
+        return 2
+    threshold_7, threshold_5, tuning_a = _tune_thresholds(tuning_rows)
+    print(
+        f"Tuning fold: odd cases (n={len(tuning_rows)}); held-out fold: "
+        f"even cases (n={len(heldout_rows)})"
+    )
+    print(
+        f"Selected thresholds from odd fold: TRL 7 >= {threshold_7:g} field "
+        f"evidence score; TRL 5 >= {threshold_5:g} low-readiness signal groups "
+        f"(training mean A={tuning_a:.3f})"
+    )
+
+    for row in rows:
+        features = row["features"]
+        prediction = _predict(features, threshold_7, threshold_5)
+        abstained = not features["has_text"]
+        row["predicted_trl"] = prediction
+        row["status"] = "abstained" if abstained else "completed"
+        row["abstention_reason"] = "insufficient evidence" if abstained else ""
+        row["confidence"] = decide_from_signals(
+            features,
+            threshold_7=threshold_7,
+            threshold_5=threshold_5,
+        )[1]
+        row["part_a"] = _score(prediction, abstained, row["estimated_trl"])
+        row["signals_7"] = features["signals_7"]
+        row["signals_5"] = features["signals_5"]
+        row["decision_text"] = (
+            "abstain (insufficient evidence)" if abstained else f"TRL {prediction}"
+        )
+        if args.verbose:
+            print(
+                f"{row['case_id']} signals: TRL7={row['signals_7'] or 'none'}; "
+                f"TRL5={row['signals_5'] or 'none'}"
+            )
+        print(
+            f"{row['case_id']}: predicted={row['decision_text']} "
+            f"estimated=TRL {row['estimated_trl']} A={row['part_a']:.2f} "
+            f"runtime={row['runtime_seconds']:.2f}s"
+            + (f" error={row['error']}" if row["error"] else "")
         )
 
-    count = len(rows)
-    module_mean = sum(row["part_a"] for row in rows) / count if count else 0.0
-    print("\nPart A mean:")
-    print(f"  our module:       {module_mean:.3f}")
-    print(f"  always-6:         {_baseline_mean(rows, 6):.3f}")
-    print(f"  always-7:         {_baseline_mean(rows, 7):.3f}")
-    print(f"  always-abstain:   {_baseline_mean(rows, None):.3f}")
+    count = len(heldout_rows)
+    module_mean = (
+        sum(row["part_a"] for row in heldout_rows) / count if count else 0.0
+    )
+    print("\nPart A mean on held-out even fold:")
+    print(f"  trl_usgs:         {module_mean:.3f}")
+    print(f"  always-6:         {_baseline_mean(heldout_rows, 6):.3f}")
 
-    estimated_levels = sorted({row["estimated_trl"] for row in rows})
+    estimated_levels = sorted({row["estimated_trl"] for row in heldout_rows})
     prediction_levels = sorted(
-        {row["predicted_trl"] for row in rows if row["predicted_trl"] is not None}
+        {
+            row["predicted_trl"]
+            for row in heldout_rows
+            if row["predicted_trl"] is not None
+        }
     )
     prediction_columns = [f"TRL {level}" for level in prediction_levels] + ["abstain"]
-    print("\nConfusion table (rows=estimated, columns=predicted):")
+    print("\nHeld-out confusion table (rows=estimated, columns=predicted):")
     print(f"{'estimated':>12} " + " ".join(f"{column:>9}" for column in prediction_columns))
     for estimated in estimated_levels:
         counts = {
             level: sum(
-                row["estimated_trl"] == estimated and row["predicted_trl"] == level
-                for row in rows
+                row["estimated_trl"] == estimated
+                and row["predicted_trl"] == level
+                for row in heldout_rows
             )
             for level in prediction_levels
         }
         abstentions = sum(
             row["estimated_trl"] == estimated and row["predicted_trl"] is None
-            for row in rows
+            for row in heldout_rows
         )
         values = [counts[level] for level in prediction_levels] + [abstentions]
         print(f"{f'TRL {estimated}':>12} " + " ".join(f"{value:>9}" for value in values))
 
-    abstentions = sum(row["predicted_trl"] is None for row in rows)
-    slowest = max(rows, key=lambda row: row["runtime_seconds"], default=None)
-    print(f"\nAbstentions: {abstentions}/{count}")
+    abstentions = sum(row["predicted_trl"] is None for row in heldout_rows)
+    slowest = max(heldout_rows, key=lambda row: row["runtime_seconds"], default=None)
+    print(f"\nHeld-out abstentions: {abstentions}/{count}")
     if slowest:
         print(
             f"Slowest case: {slowest['case_id']} "
@@ -257,7 +339,7 @@ def main() -> int:
         )
 
     worst = sorted(
-        rows,
+        heldout_rows,
         key=lambda row: (
             row["part_a"],
             row["case_id"],
@@ -266,11 +348,20 @@ def main() -> int:
     print("\n10 worst cases (id, predicted, estimated):")
     for row in worst:
         print(
-            f"  {row['case_id']}, {_format_prediction(row['decision'])}, "
+            f"  {row['case_id']}, {row['decision_text']}, "
             f"TRL {row['estimated_trl']}"
         )
 
-    _write_csv(rows)
+    _write_csv(
+        [
+            {
+                **row,
+                "signals_7": "; ".join(row["signals_7"]),
+                "signals_5": "; ".join(row["signals_5"]),
+            }
+            for row in rows
+        ]
+    )
     print(f"\nWrote {CSV_PATH}")
     return 0
 
