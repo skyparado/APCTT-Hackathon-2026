@@ -45,7 +45,7 @@ class PackageState:
 
 @dataclass(frozen=True)
 class PendingCleanup:
-    """A run whose processes are not yet confirmed stopped; its job keeps the slot until they are.
+    """A run whose processes have not been seen to stop; its job keeps the slot until they have.
 
     `error_code` is recorded if the job is still unfinished once cleanup is confirmed.
     """

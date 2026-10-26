@@ -1,6 +1,6 @@
 # Troubleshooting — every code and what to do
 
-kit 0.4.0
+kit 0.5.0
 
 ## 1. Where to look first
 
@@ -24,7 +24,7 @@ Your module's own output is in `server_data/jobs/<assessment_id>/stdout.log` and
 |---|---|---|---|
 | `INVALID_JSON` | 400 | Syntax error, duplicate key, `NaN`, not UTF-8 (§2.1). | Fix the JSON; use `diagnostics.parse_error.reason`. |
 | `REQUEST_VALIDATION_ERROR` | 422 | A field breaks the case schema or a case rule. | Read each `field_errors[]` entry; rules in [DATA_CONTRACT.md](DATA_CONTRACT.md) §4.1. |
-| `VERSION_MISMATCH` | 422 | `schema_version` or `checklist_version` differs from the server's. | Use the values from `GET /v1/package` (`expected` shows them). |
+| `VERSION_MISMATCH` | 422 | `schema_version` or `checklist_version` differs from the server's. | Use the values from `GET /v1/package` (`expected` shows them). Requests made by `tools/make_request.py` and `tools/get_public_cases.py`, and `docs/EXAMPLE_REQUEST.json`, carry the official checklist's version, which `config/dev.json` and your configuration of README step 6 run; a request for a changed checklist needs `tools/make_request.py --checklist <copy>`. |
 | `UNSUPPORTED_INPUT_PROFILE` | 422 | `input_profile` is not `pdf_report`. | Send `pdf_report`. |
 | `REQUEST_TOO_LARGE` | 413 | Body over `max_request_bytes`. | Send a smaller case; the server never truncates. Locally you may raise the limit. |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | Missing/other `Content-Type`, a charset other than UTF-8, or `Content-Encoding: gzip`. | Send `Content-Type: application/json`, uncompressed. |

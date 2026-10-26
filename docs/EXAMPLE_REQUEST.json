@@ -3,7 +3,7 @@
   "case": {
     "schema_version": "apctt-pdf-example-v1",
     "input_profile": "pdf_report",
-    "checklist_version": "DEMO-CHECKLIST-NOT-OFFICIAL",
+    "checklist_version": "APCTT-2026-CHECKLIST-v1",
     "case_id": "DEMO-001",
     "assessment_as_of": null,
     "assessment_target": {
