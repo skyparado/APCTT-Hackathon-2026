@@ -7,8 +7,11 @@
   "retrieved_at": "2026-10-09T03:42:52Z",
   "files": {
     "swagger-ui-bundle.js": {
-      "sha256": "62df541529080464a7660adc793eab7128c6193ce3be24ddc1e0e0a4a63edc2f",
-      "bytes": 1585988
+      "sha256": "e8c50c067c2edbfd794aaf3b14c2446f53190a45fae9578ccf535524dc4417a0",
+      "bytes": 1586029,
+      "upstream_sha256": "62df541529080464a7660adc793eab7128c6193ce3be24ddc1e0e0a4a63edc2f",
+      "upstream_bytes": 1585988,
+      "modified": "modified: Korean IDN TLD labels replaced by their punycode equivalents, as is the Korean sample label of the JSON Schema format examples (decision D79, 2026-10-13)"
     },
     "swagger-ui-bundle.js.LICENSE.txt": {
       "sha256": "63818894e4b04cd0e3180d9cb20761e227a939121e7484f8e1d528227c756f89",
@@ -27,8 +30,9 @@
       "bytes": 11358
     },
     "NOTICE": {
-      "sha256": "0d20d1adef18aee3f40dd258172155521ce702ac445cb5f7b7d60ed32dad2fb2",
-      "bytes": 55
+      "sha256": "4c91976c9942f60eccbd2b34fd7f7bd527e625b23a7787efdcaac658f2f9a6fd",
+      "bytes": 268,
+      "upstream_sha256": "0d20d1adef18aee3f40dd258172155521ce702ac445cb5f7b7d60ed32dad2fb2"
     }
   },
   "note": "Third-party assets under their own licence (see LICENSE); not relicensed.",

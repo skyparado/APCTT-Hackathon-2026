@@ -7,19 +7,24 @@
 Licences come only from declared metadata: Python License-Expression, else "License ::"
 classifiers, else the License field; npm "license"; submission.json models; declaration.json
 data sources. A declared string is read through the policy's exact table or as an SPDX
-expression; anything else is review. Licence texts and file contents are never read. Name rules
+expression; anything else is review. Licence texts and file contents are not read, with one
+exception: the team's own licence file (participant_module/LICENSE of a bundle, the LICENSE at the
+root of a web system) must hold the MIT text (decision D72): its permission, condition and warranty
+paragraphs, compared after case, quotes, punctuation and white space are normalised; the Apache
+License 2.0 text there is denied with a message that says so. Name rules
 in the policy flag known problem packages whatever their metadata says. Public models: only the
 model catalogue (contracts/model-catalog.json, decision D64) and team-trained weights; any other
-public model is denied. Review items are decided by a person after the submission (D63).
+public model is denied. HQ decides review items after the submission (D63).
 
 Exit codes: 0 everything allowed, 1 something denied, 2 only review items, 3 usage or input
-error. Standard library only, Python 3.10+, no network. A screening aid, not legal advice and
-not a licence approval: it flags, a person decides.
+error. Standard library only, Python 3.10+, no network. It flags components from their declared
+metadata; HQ decides flagged items after submission.
 """
 
 from __future__ import annotations
 
 import argparse
+import codecs
 import email.parser
 import fnmatch
 import hashlib
@@ -41,7 +46,7 @@ import model_catalog  # noqa: E402 - the kit's catalogue loader (D64)
 DEFAULT_POLICY = TOOLS.parent / "contracts" / "license-policy.json"
 DEFAULT_CATALOG = model_catalog.CATALOG
 REPORT_VERSION = "apctt-license-report-v2"
-NOTICE = "Screening aid, not legal advice and not a licence approval: it flags, a person decides."
+NOTICE = "Flags components from their declared metadata; HQ decides flagged items after submission."
 ALLOWED, REVIEW, DENIED = "allowed", "review", "denied"
 RANK = {ALLOWED: 0, REVIEW: 1, DENIED: 2}
 KINDS = ("team", "layout", "wheel", "lock", "npm", "model", "dataset", "asset")
@@ -391,8 +396,9 @@ class Policy:
         return node_ids(tree) if tree is not None else []
 
     def team_cleared(self, expression: str) -> bool:
-        """D53 rule 1: only Apache-2.0 or MIT (alone, or both with AND/OR), with no WITH
-        exception ("MIT WITH Commons-Clause" is another licence)."""
+        """The team licence (D72, superseding D53 rule 1): only the identifiers of the policy's
+        team_license.allowed (MIT), with no WITH exception ("MIT WITH Commons-Clause" is another
+        licence) and no other licence joined by AND or OR."""
         tree = parse(expression) if expression else None
 
         def plain(node: Node) -> bool:
@@ -827,17 +833,96 @@ def outside_base(items: Iterable[Item]) -> None:
 # --------------------------------------------------------------- Stage 1 bundle (D51)
 
 
+TEAM_LICENCE = "MIT"  # D72 (2026-10-13): the team's own work is MIT only
+NO_APACHE = (
+    "Apache-2.0 is no longer accepted for the team's own work (D72, 2026-10-13): declare MIT and "
+    "put the MIT text in participant_module/LICENSE (Stage 2: LICENSE at the root of the web "
+    "code); third-party components keep their own licences"
+)
+
+
+# The three paragraphs of the MIT text (licenses/MIT.txt) that a team's LICENSE must contain (D72).
+MIT_PARAGRAPHS = (
+    "Permission is hereby granted, free of charge, to any person obtaining a copy of this software"
+    ' and associated documentation files (the "Software"), to deal in the Software without'
+    " restriction, including without limitation the rights to use, copy, modify, merge, publish,"
+    " distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom"
+    " the Software is furnished to do so, subject to the following conditions:",
+    "The above copyright notice and this permission notice shall be included in all copies or"
+    " substantial portions of the Software.",
+    'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,'
+    " INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR"
+    " PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE"
+    " FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR"
+    " OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER"
+    " DEALINGS IN THE SOFTWARE.",
+)
+APACHE_TITLE = "apache license version 2 0 january 2004"  # the Apache-2.0 heading, normalised
+
+
+def plain_words(text: str) -> str:
+    """Lower-case words and numbers only: quotes, punctuation and line breaks do not matter."""
+    return " ".join(re.findall(r"[a-z0-9]+", text.lower()))
+
+
+def licence_text(path: Path) -> str:
+    """A team licence file as text: UTF-8 (a byte order mark is ignored), or UTF-16 when it starts
+    with a UTF-16 byte order mark, as some editors save "Unicode" text."""
+    try:
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_TEXT:
+            return ""
+        data = path.read_bytes()
+    except OSError:
+        return ""
+    if data.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
+        return data.decode("utf-16", errors="replace")
+    return data.decode("utf-8", errors="replace")
+
+
+def team_text(team: Item, path: Path, where: str) -> None:
+    """D72: the team's licence file must hold the MIT text (the three paragraphs of
+    MIT_PARAGRAPHS). The Apache-2.0 text instead is denied with a message that says so; the MIT
+    text together with the Apache-2.0 text is review (which licence is granted?)."""
+    text = plain_words(licence_text(path))
+    apache = APACHE_TITLE in text
+    fix = "licenses/MIT.txt of the kit, with your team in the copyright line, saved as UTF-8 text"
+    if all(plain_words(paragraph) in text for paragraph in MIT_PARAGRAPHS):
+        if apache:
+            team.flag(
+                REVIEW,
+                f"{where} also holds the Apache License 2.0 text: the team's own work is licensed "
+                f"under MIT alone (D72); keep only the MIT text ({fix})",
+            )
+        return
+    if apache:
+        team.flag(
+            DENIED,
+            f"{where} holds the Apache License 2.0 text, not the MIT text: the team's own work is "
+            f"MIT only (D72); replace it with the MIT text ({fix})",
+        )
+    else:
+        team.flag(
+            DENIED,
+            f"{where} does not contain the MIT licence text (its permission, condition and "
+            f"warranty paragraphs; the team's own work is MIT only, D72): use {fix}",
+        )
+
+
 def team_licence(team: Item, declared: object, where: str, policy: Policy, hint: str = "") -> None:
-    """Confirmed D53 rule 1: the team's own work is Apache-2.0 or MIT; anything else is denied."""
+    """The team licence (D72, superseding D53 rule 1): the team's own work is MIT only; anything
+    else is denied, and Apache-2.0, allowed until D72, gets a message that says what changed."""
     text = declared if isinstance(declared, str) else ""
     expression = policy.normalise(text) or ""
     if not team.license and not team.declared:
         team.declared, team.license = clean(text), expression
     if not text.strip():
-        team.flag(DENIED, f"{where} is missing: declare Apache-2.0 or MIT{hint}")
+        team.flag(DENIED, f"{where} is missing: declare {TEAM_LICENCE}{hint}")
     elif not policy.team_cleared(expression):
-        reason = f'{where} is "{clean(text, 80)}": the team\'s own work must be Apache-2.0 or MIT'
-        team.flag(DENIED, reason + f", without a WITH clause or added terms (D53){hint}")
+        reason = f'{where} is "{clean(text, 80)}": the team\'s own work must be {TEAM_LICENCE}'
+        reason += f" alone, without a WITH clause, added terms or another licence (D72){hint}"
+        if "apache-2.0" in (i.lower() for i in policy.ids(expression)):
+            reason += f"; {NO_APACHE}"
+        team.flag(DENIED, reason)
 
 
 def model_files(item: Item, root: Path, relative: object, policy: Policy, own: bool) -> None:
@@ -900,11 +985,12 @@ def team_trained(
     team: Item,
     policy: Policy,
 ) -> None:
-    """Weights the team trained itself are the team's own work (D53 rule 1), covered by its
-    licence; fine-tunes and adapters of a catalogue model name it in base_model (D64). The deny
-    list still applies to every name the entry gives, a declared licence must be Apache-2.0 or
-    MIT, a base model outside the catalogue is refused, and a bare name of a model family other
-    than the declared base (my-gemma-ft) is review."""
+    """Weights the team trained itself are the team's own work, covered by its licence (MIT,
+    D72); fine-tunes and adapters of a catalogue model name it in base_model (D64) and stay
+    subject to that model's licence too (keep its LICENSE and NOTICE: a condition of the item).
+    The deny list still applies to every name the entry gives, a declared licence must be MIT, a
+    base model outside the catalogue is refused, and a bare name of a model family other than the
+    declared base (my-gemma-ft) is review."""
     item.origin = "team-trained"
     catalog = policy.catalog
     if denied:
@@ -913,7 +999,7 @@ def team_trained(
     other_licence = bool(item.declared) and not policy.team_cleared(expression or "")
     if other_licence:
         reason = f'declared licence "{clean(item.declared, 80)}": team-trained weights are the '
-        item.flag(DENIED, reason + "team's own work, Apache-2.0 or MIT (D53 rule 1)")
+        item.flag(DENIED, reason + f"team's own work, {TEAM_LICENCE} only (D72)")
     bases: list[model_catalog.Model] = []
     base_model = entry.get("base_model")
     if base_model is not None:
@@ -950,6 +1036,11 @@ def team_trained(
     ]
     if families:
         item.flag(REVIEW, f'the name "{families[0][0]}" suggests a {families[0][1]} model')
+    for base in bases:  # D72: derived weights stay subject to the catalogue model's licence
+        item.conditions.append(
+            f"derived from catalogue model {base.id} ({base.license}): the weights stay subject "
+            "to its licence as well; keep its LICENSE and NOTICE files with them"
+        )
     # The team licence covers only weights that look like the team's own; otherwise the licence
     # column shows only what the entry itself declares.
     third_party_like = bool(denied or families or item.status == DENIED)
@@ -1049,8 +1140,11 @@ def check_bundle(root: Path, policy: Policy, report: Report) -> None:
         team.flag(DENIED, f"submission.json {problem or 'is not a JSON object'}")
     submission = mapping(submission)
     team_licence(team, submission.get("license"), 'submission.json "license"', policy)
-    if not present(root / "participant_module" / "LICENSE"):
+    licence_file = root / "participant_module" / "LICENSE"
+    if not present(licence_file):
         team.flag(DENIED, "participant_module/LICENSE is missing or empty: add your licence text")
+    elif team.status == ALLOWED:  # "license" is MIT: the file must hold the MIT text (D72)
+        team_text(team, licence_file, "participant_module/LICENSE")
     models = submission.get("models", [])
     report.items += scan_models(models, root, policy, team)
     report.items += undeclared_files(root, models, policy)
@@ -1330,8 +1424,12 @@ def front_end_items(
 def check_web(web: Path, policy: Policy, report: Report) -> None:
     team = Item("web", "team", "web system", origin="LICENSE")
     report.items.append(team)
-    if not any(present(web / name) for name in policy.web_licence_files):
-        team.flag(DENIED, "no LICENSE at the root of the web code: add the Apache-2.0 or MIT text")
+    licence_files = [name for name in policy.web_licence_files if present(web / name)]
+    if not licence_files:
+        team.flag(DENIED, f"no LICENSE at the root of the web code: add the {TEAM_LICENCE} text")
+    else:  # the web code is the team's own work: MIT only, so the file holds the MIT text (D72)
+        name = licence_files[0]
+        team_text(team, web / name, f"{name} at the root of the web code")
     layout = walk_web(web, policy)
     projects: list[Path] = []
     locked: list[Path] = []
@@ -1357,14 +1455,14 @@ def check_web(web: Path, policy: Policy, report: Report) -> None:
     requirements = [r for p in layout.requirement_files for r in read_requirements(p, web, seen)]
     reason = (
         "is not read: a web system uses only packages of the common base (D64); leave it out of "
-        "the upload, or list those packages with exact versions (==) in a requirements.txt next "
-        "to it"
+        "the web directory, or list those packages with exact versions (==) in a "
+        "requirements.txt next to it"
     )
     for path in (p for p in layout.unread if p.name not in OTHER_JS_LOCKS):
         report.items.append(
             checker_item("web", "lock", rel(path, web), REVIEW, f"{path.name} {reason}")
         )
-    found = find_python(web, lambda folder: True)  # a web upload is delivered whole
+    found = find_python(web, lambda folder: True)  # the whole web directory is checked
     python_items = scan_python(web, "web", requirements, found, policy)
     outside_base(python_items)
     report.items += python_items
@@ -1413,7 +1511,7 @@ def notices(report: Report) -> str:
         "# Third-party notices (draft)",
         "",
         f"Drafted by tools/check_licenses.py (policy {report.policy.version}) from declared "
-        "metadata only; not legal advice. Check every row against the component's own licence "
+        "metadata only. Check every row against the component's own licence "
         'and notice files, keep them with the component, resolve "Not cleared" before shipping, '
         "and add by hand what the checker does not read (copied files, fonts, icons).",
     ]

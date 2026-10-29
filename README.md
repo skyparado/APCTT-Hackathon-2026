@@ -1,21 +1,27 @@
 # APCTT Assessment Server — Participant Kit
 
-kit 0.4.0 | API `apctt-api-v0.2-draft` | worker protocol `apctt-worker-v2` | variant: cpu
+kit 0.5.0 | API `apctt-api-v0.2-draft` | worker protocol `apctt-worker-v2` | variant: cpu
 
 This kit is a local copy of the server the organizer will use to run your **Assessment Package**
 (your TRL assessment module). With it you can run your module exactly the way the organizer's
 server runs it — in a fresh, separate process per case — and see whether its output satisfies the
 result contract before you submit.
 
-It is a development kit, not an official event release. It uses the DEMO checklist
-(`DEMO-CHECKLIST-NOT-OFFICIAL`) and synthetic cases only. The included example modules are format
-demonstrations, not TRL models, baselines or expert judgments.
+It is a development kit, not an official event release. It contains the official checklist
+(`contracts/checklist.official.json`, `APCTT-2026-CHECKLIST-v1`, 12 criteria) and the list of the
+public sample cases (`contracts/public-cases.json`: 99 USGS reports, whose PDFs you download with
+`tools/get_public_cases.py`; decision D74). The official checklist is the default of the kit's
+configuration (`config/dev.json`) and of the example request. The included example modules look
+for a few configured phrases only; they are format demonstrations, not TRL models, baselines or
+expert judgments.
 
 **Start with [PROBLEM_DESCRIPTION](docs/participant/PROBLEM_DESCRIPTION.md):** the task, the fixed
-environment and the model catalogue, the three submissions (only submission 3 is scored), how your
-package is run and how it is scored, Stage 2, the licence rules and the FAQ.
-This variant does not include the CUDA example. GPU execution through the server is not verified in
-this kit version; the organizer will publish GPU guidance separately.
+environment and the model catalogue, the event machine, up to two submissions (the latest valid one
+received by the deadline is your final model), how your package is run and how it is scored,
+Stage 2, the licence rules and the FAQ.
+This variant does not include the CUDA example. GPU/CUDA tests were run with kit 0.3.0 on an
+NVIDIA RTX 3070 Laptop GPU on 2026-09-30 and were not re-run for 0.5.0; the CUDA variant of the kit
+describes them.
 
 ## Step by step: from unpacking to a submission
 
@@ -35,7 +41,7 @@ work/
     ├── participant_module/
     │   ├── __init__.py
     │   ├── adapter.py
-    │   ├── LICENSE                              Apache-2.0 or MIT
+    │   ├── LICENSE                              the MIT text
     │   └── THIRD_PARTY_NOTICES.md
     ├── assets/                                  only weights and rules your team trained or wrote
     ├── submission.json                          (step 10)
@@ -105,7 +111,8 @@ curl -s http://127.0.0.1:8000/v1/assessments/<assessment_id from the Location li
 ```
 
 `/health/ready` says `"reason_code":"READY"`, the POST answers with a `Location`, and after a second
-the GET shows `"job_status":"finished"` and `"result_origin":"module"`. The browser view
+the GET shows `"job_status":"finished"` and `"result_origin":"module"`, with one entry per criterion
+of the official checklist (`APCTT-C01` to `APCTT-C12`). The browser view
 `http://127.0.0.1:8000/docs` lets you try the same calls. Walk-through of every field:
 [QUICKSTART](docs/participant/QUICKSTART.md). Stop the server with `Ctrl+C`.
 
@@ -162,8 +169,8 @@ touch my_submission/participant_module/__init__.py
 ```
 
 Add three small files now, because the first two are part of your package hash:
-`my_submission/participant_module/LICENSE` (the full Apache-2.0 or MIT text with your team in the
-copyright line; the kit has both texts in `licenses/`),
+`my_submission/participant_module/LICENSE` (the full MIT text with your team in the copyright
+line; the kit has it in `licenses/MIT.txt`; your own work is MIT only, decision D72),
 `my_submission/participant_module/THIRD_PARTY_NOTICES.md` (every third-party component you use,
 with version and licence) and `my_submission/README.md` (what your module does and how it was
 built). [LICENSING](docs/participant/LICENSING.md) §2 explains the licence rule.
@@ -240,6 +247,7 @@ config["module"].update(
     example_only=False,
     settings={},
 )
+config["checklist_path"] = "../contracts/checklist.official.json"
 config["worker"]["python"] = "../../apctt-env/base/bin/python"
 config["worker"]["extra_env"] = {"APCTT_MODEL_STORE": str(Path("../models").resolve())}
 with open("config/my.local.json", "w", encoding="utf-8") as handle:
@@ -248,10 +256,13 @@ PY
 ```
 
 Relative paths in a configuration are resolved from the configuration file's own directory
-(`config/`), which is why they start with `../../`. `worker.python` is the base's Python from step 5,
-and `APCTT_MODEL_STORE` tells your module where the catalogue models are, as the organizer's
-configuration does (an absolute path, because the worker runs in its own scratch folder). Every
-field, including the limits, is described in [CONFIGURATION](docs/participant/CONFIGURATION.md).
+(`config/`), which is why they start with `../../`. `checklist_path` is the official checklist
+(`APCTT-2026-CHECKLIST-v1`, criteria `APCTT-C01` to `APCTT-C12`), the one the organizer runs your
+package with; it is already the default of `config/dev.json`, and the script sets it so that your
+configuration names it explicitly. `worker.python` is the base's Python from step 5, and
+`APCTT_MODEL_STORE` tells your module where the catalogue models are, as the organizer's configuration does (an absolute path,
+because the worker runs in its own scratch folder). Every field, including the limits, is
+described in [CONFIGURATION](docs/participant/CONFIGURATION.md).
 
 Start the server with it and check that it picked up your package:
 
@@ -280,6 +291,8 @@ import urllib.error
 import urllib.request
 
 BASE = "http://127.0.0.1:8000"
+MAX_REQUEST_BYTES = 83886080  # limits.max_request_bytes of your configuration (80 MiB, D77)
+TIMEOUT = 120  # seconds; the server may count the pages of large PDFs for up to 60 s
 
 
 def call(method, path, body=None):
@@ -287,19 +300,38 @@ def call(method, path, body=None):
     request = urllib.request.Request(BASE + path, data=data, method=method)
     request.add_header("Content-Type", "application/json")
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
             return response.status, response.headers, json.loads(response.read())
     except urllib.error.HTTPError as error:
         return error.code, error.headers, json.loads(error.read())
 
 
-path = sys.argv[1] if len(sys.argv) > 1 else "docs/EXAMPLE_REQUEST.json"
+path = sys.argv[1] if len(sys.argv) > 1 else "my_cases/example.json"
 with open(path, encoding="utf-8") as handle:
     body = json.load(handle)
 body["request_id"] = f"dev-{time.strftime('%Y%m%d-%H%M%S')}-{time.time_ns() % 1000000}"
-status, headers, job = call("POST", "/v1/assessments", body)
+size = len(json.dumps(body).encode("utf-8"))
+if size > MAX_REQUEST_BYTES:
+    print("rejected 413 REQUEST_TOO_LARGE", f"(body {size} bytes > {MAX_REQUEST_BYTES}; not sent)")
+    sys.exit(1)
+try:
+    status, headers, job = call("POST", "/v1/assessments", body)
+except OSError as error:
+    reason = getattr(error, "reason", error)
+    if isinstance(reason, ConnectionRefusedError):
+        print("cannot reach", BASE, "- is the server running?")
+    elif isinstance(reason, (BrokenPipeError, ConnectionResetError)):
+        # the server answers 413 before it reads a body over its limit and closes the connection
+        print("rejected 413 REQUEST_TOO_LARGE", f"(the server closed the connection while {size}",
+              f"bytes were sent: {reason}; its limits.max_request_bytes is lower)")
+    elif isinstance(reason, TimeoutError):
+        print("no answer from", BASE, f"within {TIMEOUT} s - is the server stuck? see its log")
+    else:
+        print("connection to", BASE, "failed:", reason)
+    sys.exit(1)
 if status != 202:
-    print("rejected", status, job["error"]["code"], json.dumps(job["error"]["field_errors"]))
+    error = job.get("error", {})
+    print("rejected", status, error.get("code"), json.dumps(error.get("field_errors", [])))
     sys.exit(1)
 while job["job_status"] != "finished":
     time.sleep(0.5)
@@ -317,21 +349,46 @@ for issue in diagnostics.get("output_issues", []):
 print("module logs   ", f"server_data/jobs/{job['assessment_id']}/stderr.log")
 ```
 
-Cases are PDF reports. To turn your own PDFs into a request file, use the kit's
-`tools/make_request.py`. It copies the case fields (target, application, environment, title,
-versions) from `docs/EXAMPLE_REQUEST.json` and embeds each PDF as base64 with its SHA-256:
+Cases are PDF reports. To turn PDFs into a request file, use the kit's `tools/make_request.py`.
+It copies the case fields (target, application, environment, title, `schema_version`) from
+`docs/EXAMPLE_REQUEST.json`, sets `checklist_version` to that of the official checklist (the one
+your configuration runs; `--checklist` names another) and embeds each PDF as base64 with its
+SHA-256. Start with the kit's example report, then your own PDFs:
 
 ```bash
+.venv/bin/python tools/make_request.py docs/EXAMPLE_REPORT.pdf -o my_cases/example.json --case-id EXAMPLE-001
 .venv/bin/python tools/make_request.py ../reports/report-a.pdf -o my_cases/case-001.json --case-id MY-001
 ```
 
-Edit `assessment_target`, `intended_application`, `intended_environment` and `title` in the new
+Edit `assessment_target`, `intended_application`, `intended_environment` and `title` in a new
 file to describe what the report assesses. Then, with the server from step 6 running:
 
 ```bash
-.venv/bin/python submit.py                          # the example case (docs/EXAMPLE_REPORT.pdf)
+.venv/bin/python submit.py                          # my_cases/example.json (docs/EXAMPLE_REPORT.pdf)
 .venv/bin/python submit.py my_cases/case-001.json   # your own PDFs
 ```
+
+**The public sample cases.** `contracts/public-cases.json` lists 99 real reports of the U.S.
+Geological Survey with their case fields, ready to run (decision D74;
+[PROBLEM_DESCRIPTION](docs/participant/PROBLEM_DESCRIPTION.md) §5.2). The PDFs are not in the kit:
+`tools/get_public_cases.py` downloads them from pubs.usgs.gov, checks each against its SHA-256 and
+writes request files for the official checklist. Start with the 3 cases of the diagnostic run that
+comes back with every submission (about 5 MB):
+
+```bash
+.venv/bin/python tools/get_public_cases.py --list                       # every case: SDG, TRL, pages, MiB
+.venv/bin/python tools/get_public_cases.py --download --smoke --dir ../public_cases/pdf
+.venv/bin/python tools/get_public_cases.py --make-requests --smoke --dir ../public_cases/pdf --out ../public_cases/requests
+.venv/bin/python submit.py ../public_cases/requests/USGS-SDG-012.json
+```
+
+`--download --all` fetches all 99 (about 1.1 GB, one file at a time; run it again to resume).
+`--labels` prints the organizer's estimated TRL and its reason for each case: a rough reference,
+not expert labels per criterion, and never sent to your module. If the download stops with a
+certificate error, the tool prints what to do; you can also save a PDF from its `pdf_url` by hand as
+`../public_cases/pdf/<case_id>.pdf`, and the tool then only checks it. The reports are U.S. public
+domain (credit "U.S. Geological Survey"); some figures in them are third-party material, so use
+the PDFs as they are and do not republish figures separately.
 
 Read the output like this:
 
@@ -341,8 +398,10 @@ Read the output like this:
 | `result_origin supervisor`, `error_code MODULE_ERROR` | Your code raised an exception (the `failure` line says so) | Read the traceback in the `module logs` file |
 | `output issue <path> <rule>` | Your result broke a contract rule | Look the rule up in [DATA_CONTRACT](docs/participant/DATA_CONTRACT.md) §4 |
 | `error_code TIMEOUT` and `failure The model could not process the documents within the 180-second limit.` | The case took longer than 3 minutes (`limits.deadline_ms`, load time included) | Make it faster, or stop early with `context.remaining_ms()`: [MODULE_GUIDE](docs/participant/MODULE_GUIDE.md) §5 |
-| `rejected 422 …` | The request file itself is invalid | The printed `field_errors` name the field and rule |
+| `rejected 422 …` | The request file itself is invalid, or over an input limit (`max_documents`, `max_document_bytes`, `max_total_pages`) | The printed `field_errors` name the field and rule |
+| `rejected 413 REQUEST_TOO_LARGE …` | The request is over `limits.max_request_bytes` (80 MiB: about 59 MiB of PDFs, because they travel as base64) | Use fewer or smaller PDFs; `tools/make_request.py` warns when it writes such a file |
 | `rejected 503 BUSY` | Another case is still running | Wait and run again |
+| `no answer from … within 120 s` | The server did not answer the request (it may take up to a minute to count the pages of large PDFs) | Read the server's console output; restart the server if it is stuck |
 
 Every input field, and what your module receives for each PDF (`path`, `page_count`), is described
 in [DATA_CONTRACT](docs/participant/DATA_CONTRACT.md) §1.
@@ -373,12 +432,17 @@ libraries ([MODULE_GUIDE](docs/participant/MODULE_GUIDE.md) §7). Never put publ
 
 ### Step 9 — Test the conditions of the real evaluation
 
-The organizer's server will differ from the DEMO setup. Check each point locally:
+The organizer's server will differ from the kit's example setup. Check each point locally:
 
-- **Different checklist.** Copy `contracts/checklist.demo.json`, change the criterion IDs,
-  descriptions and `version`, set `checklist_path` in `config/my.local.json` to the copy, and set
-  `checklist_version` in your request files to the new version. Your module must not hard-code the
-  DEMO IDs ([CONFIGURATION](docs/participant/CONFIGURATION.md) §4).
+- **Checklist.** Your configuration already runs the official checklist (12 criteria). Your module
+  must still take the criteria from `config["checklist"]` and not hard-code their IDs. To check
+  that once, copy `contracts/checklist.demo.json` (the short DEMO checklist, kept for this
+  exercise only), change the criterion IDs, descriptions and `version`, set `checklist_path` in a
+  copy of `config/my.local.json` to it, make a request with
+  `tools/make_request.py --checklist <your copy>`, and run it
+  ([CONFIGURATION](docs/participant/CONFIGURATION.md) §4).
+- **Real reports.** Run the public sample cases of step 7, at least the 3 of the diagnostic run
+  and a few long ones (`--list` shows the pages), and compare your TRLs with `--labels`.
 - **Time limit.** The event allows 3 minutes per case, model loading included. Time your largest
   realistic case, lower `limits.deadline_ms` to test the edge, and stop in time by checking
   `context.remaining_ms()` ([MODULE_GUIDE](docs/participant/MODULE_GUIDE.md) §5).
@@ -387,10 +451,21 @@ The organizer's server will differ from the DEMO setup. Check each point locally
   downloaded at run time. Disconnect the network and run your cases once.
 - **Model loading.** Every case starts a new process and loads its models again, inside the
   3-minute limit. Time `timings_ms.load` with the models you use; the large 4-bit models read
-  14.50–16.35 GB from disk per case ([MODEL_CATALOG](docs/participant/MODEL_CATALOG.md)).
+  14.50–16.35 GB from disk per case, and the event machine's 16 GB of RAM cannot keep them in the
+  file cache ([MODEL_CATALOG](docs/participant/MODEL_CATALOG.md)).
+- **The event machine.** An Asus TUF Dash F15 FX516PR-HN002: Intel Core i7-11370H (4 cores, 8
+  threads), 16 GB of RAM, RTX 3070 Laptop GPU with 8 GB, on Ubuntu 24.04. At least 12 GB of RAM is
+  available to your worker (decision D80); time a CPU-only module on 4 cores
+  ([PROBLEM_DESCRIPTION](docs/participant/PROBLEM_DESCRIPTION.md) §7.2). The kit does not measure
+  your worker's RAM; measure its peak yourself, for example by logging
+  `resource.getrusage(resource.RUSAGE_SELF).ru_maxrss` to stderr at the end of `assess`
+  ([MODULE_GUIDE](docs/participant/MODULE_GUIDE.md) §7.4).
 - **Clean-up.** `reset_case` and `close` must never raise, or the case fails with `CLEANUP_ERROR`.
-- **Input limits.** Try your largest realistic case against `limits.max_documents`,
-  `limits.max_document_bytes` (20 MiB per PDF) and `limits.max_total_pages`.
+- **Input limits.** The official limits (decision D77) are in the kit's configuration: at most 3
+  PDFs per case (`limits.max_documents`), 50 MiB per PDF (`limits.max_document_bytes`), 300 pages
+  per case (`limits.max_total_pages`) and 80 MiB per request (`limits.max_request_bytes`; PDFs as
+  base64, so about 59 MiB of PDFs per case). Try your largest realistic case against them: a
+  request over 80 MiB is refused with `413 REQUEST_TOO_LARGE`, which `submit.py` prints.
 - **Hard PDFs.** Include scanned pages, tables, multi-column layouts and long reports among your
   test PDFs; reading them well is part of the assessment quality you compete on.
 
@@ -420,8 +495,8 @@ Create the two remaining files in `my_submission/`:
 ```
 
 Replace `team`, `package_id` and `package_version` with yours (the same values as in
-`declaration.json`), `license` with your licence (`Apache-2.0` or `MIT`, as in
-`participant_module/LICENSE`), `compute.device` with `cpu` or `cuda:0` and `settings` with your
+`declaration.json`), keep `license` as `MIT` (the only licence for your own work, decision D72; the
+MIT text is in `participant_module/LICENSE`), `compute.device` with `cpu` or `cuda:0` and `settings` with your
 `module.settings`. `base_id` is the common base of this kit (`contracts/base-environment.json`; step
 5 prints it). In `models`, list every catalogue model your module loads, for example
 `{"catalog_id": "all-minilm-l6-v2"}`, and the weights your team trained, with `"team_trained":
@@ -454,26 +529,29 @@ built: [CONFIGURATION](docs/participant/CONFIGURATION.md) §5. Before each uploa
 [MODULE_GUIDE](docs/participant/MODULE_GUIDE.md) §9 and [SUBMISSION](docs/participant/SUBMISSION.md)
 §6.
 
-Upload the zip through the channel the organizer announces. There are three submissions:
+Upload the zip through the channel published on the official competition website. **Each team may submit its Stage 1
+model up to two times. The latest valid submission received by the deadline will be treated as the
+final model** (decision D73):
 
-1. **Submission 1 (check).** Run on the public sample cases; you get pass/fail and diagnostics.
-2. **Submission 2 (interim check).** Run on a separate interim case set; you get diagnostics and
-   your automatic scores A and B, privately. It is not counted.
-3. **Submission 3 (final).** Run on the hidden cases and scored. **Only submission 3 is scored:**
-   a team without one is not scored or ranked, and no earlier submission is used instead.
+1. **Every submission** is checked at intake; you get back the receipt (valid or refused, with the
+   reasons) and a diagnostic run of 3 public sample cases (statuses, error codes, failure
+   sentences, timings; no score).
+2. **Your final model** is the latest valid submission received by the deadline; if your second
+   submission is refused, the first valid one stays. It is run on the hidden cases and scored.
+3. **A team without a valid submission received by the deadline** is not scored or ranked.
 
 Nothing is approved in advance: every submission is checked in full with the same published rules
-([PROBLEM_DESCRIPTION](docs/participant/PROBLEM_DESCRIPTION.md) §9 and §11). Deadlines, the
-submission channel and the official checklist are announced by the organizer; they are not part of
-this kit.
+([PROBLEM_DESCRIPTION](docs/participant/PROBLEM_DESCRIPTION.md) §9 and §11). Deadlines and the
+submission channel are published on the official competition website; they are not part of this kit.
 
 ## What this kit does not do
 
 - It does not score your results or compare them with expert labels. There are no answers here.
 - It does not tell you whether your evidence is *sufficient*; it only checks that the result is
   structurally valid and consistent (for example, a `met` criterion must cite at least one page).
-- It does not reproduce the event hardware, the official checklist, the official limits other
-  than the 3-minute per-case limit, network isolation or the hidden evaluation cases.
+- It does not reproduce the event hardware, network isolation or the hidden evaluation cases. It
+  has the official checklist and the list of the public sample cases (decision D74), and its
+  configuration has the official input limits (decision D77) and the 3-minute limit per case.
 - It does not give your module network access. `tools/make_env.py` builds the same common base
   as the organizer's machines and `tools/get_models.py` the same model store, but the organizer's
   own machines are the ones that count.
@@ -505,14 +583,14 @@ model-load time.
 
 | Guide | Read it for |
 |---|---|
-| [PROBLEM_DESCRIPTION](docs/participant/PROBLEM_DESCRIPTION.md) | The challenge: task, fixed environment, model catalogue, three submissions, how it is run and scored, Stage 2, FAQ |
+| [PROBLEM_DESCRIPTION](docs/participant/PROBLEM_DESCRIPTION.md) | The challenge: task, fixed environment, event machine, model catalogue, up to two submissions, how it is run and scored, Stage 2, FAQ |
 | [QUICKSTART](docs/participant/QUICKSTART.md) | Every field of a request and a finished job, with the example module |
 | [MODULE_GUIDE](docs/participant/MODULE_GUIDE.md) | The four methods, inputs, failures, time limit, logs, worker environment and model store |
 | [DATA_CONTRACT](docs/participant/DATA_CONTRACT.md) | Every input and output field and rule, with valid and invalid examples |
 | [API_REFERENCE](docs/participant/API_REFERENCE.md) | Every endpoint, header, status code and response; a Python client |
 | [CONFIGURATION](docs/participant/CONFIGURATION.md) | Every configuration field and default limit; the package hash |
 | [TROUBLESHOOTING](docs/participant/TROUBLESHOOTING.md) | Every error, failure, warning and start-up code |
-| [SUBMISSION](docs/participant/SUBMISSION.md) | The three submissions and what each returns, the bundle, TechPort use, data declaration, handover |
+| [SUBMISSION](docs/participant/SUBMISSION.md) | Up to two submissions and what each returns, the bundle, TechPort use, data declaration, handover |
 | [LICENSING](docs/participant/LICENSING.md) | Your licence, allowed and refused third-party components, copied code and models, the licence checker |
 | [MODEL_CATALOG](docs/participant/MODEL_CATALOG.md) | The public models you may use, chosen for the reference GPU (RTX 3070 Laptop GPU, 8 GB VRAM): sizes, VRAM estimates, CPU options, 4-bit options |
 
@@ -522,19 +600,21 @@ model-load time.
 |---|---|
 | `src/` | Server (`apctt_server`), worker runtime (`apctt_runtime`), contracts (`apctt_contracts`), diagnostics |
 | `participant_example/` | CPU example `AssessmentModule` (DEMO rules, not a TRL model) |
-| `config/dev.json` | Local configuration: loopback, CPU, DEMO checklist, default limits |
+| `config/dev.json` | Local configuration of the example module: loopback, CPU, the official checklist, the official input limits |
 | `contracts/openapi.json` | Frozen OpenAPI description of the HTTP API |
 | `contracts/worker-protocol.json` | JSON Schemas of the worker input, observation file and result |
-| `contracts/checklist.demo.json` | The DEMO checklist (two criteria) |
-| `docs/EXAMPLE_REQUEST.json` | Synthetic request you can send as is (embeds `docs/EXAMPLE_REPORT.pdf`) |
+| `contracts/checklist.official.json` | The official checklist, `APCTT-2026-CHECKLIST-v1` (12 criteria, decision D74), the default of `config/dev.json` and of step 6 |
+| `contracts/checklist.demo.json` | A DEMO checklist (two criteria) for the protocol tests and the changed-checklist check of step 9 |
+| `contracts/public-cases.json`, `contracts/public-cases.schema.json`, `tools/get_public_cases.py` | The public sample cases (99 USGS reports; the PDFs are downloaded, not included) and the tool that downloads, checks and turns them into request files (step 7) |
+| `docs/EXAMPLE_REQUEST.json` | Synthetic request for the official checklist that you can send as is (embeds `docs/EXAMPLE_REPORT.pdf`) |
 | `docs/EXAMPLE_REPORT.pdf` | The 2-page synthetic PDF inside the example request |
-| `tools/make_request.py` | Builds a request file from your PDFs (step 7) |
+| `tools/make_request.py` | Builds a request file from your PDFs, for the official checklist by default (step 7) |
 | `tools/make_env.py` | Builds and checks the common base environment; prints the worker Python (step 5) |
 | `tools/get_models.py`, `tools/model_catalog.py`, `contracts/model-catalog.json` | The model catalogue, its checks, and the download of catalogue models into a local store (step 5) |
 | `tools/make_submission.py`, `contracts/submission.schema.json` | Packs and checks your submission zip; the format of `submission.json` (step 10) |
 | `tools/check_licenses.py`, `contracts/license-policy.json` | Licence checker for your submission or web system, and the policy it applies (step 10) |
 | `requirements-base.in`, `requirements-base.lock`, `constraints-base.txt`, `overrides-base.txt`, `contracts/base-environment.json` | The common base environment: its input, hashed lock (Linux x86_64, Python 3.12), its versions as plain pins, and its record (`base_id`, import names, sizes) |
-| `licenses/` | The Apache-2.0 and MIT texts, for your `LICENSE` |
+| `licenses/` | The MIT text for your `LICENSE` (D72), and the Apache-2.0 text that `tools/get_models.py` adds to a catalogue model whose repository has none |
 | `docs/EXAMPLE_RESPONSE.json` | Shape of a finished job (illustrative values) |
 | `docs/participant/` | The guides listed above and an example data declaration |
 | `tests/` | Server conformance tests and the tests of the kit's tools |
@@ -553,8 +633,8 @@ specification. For participants, the contract is the documentation in `docs/part
 | Operating system | Linux or WSL2 intended. Native Windows is not supported (the server uses POSIX process groups and file locks). |
 | Verified so far | Ubuntu 24.04 x86_64 with Python 3.12: all conformance tests pass (kit 0.2.1). macOS arm64 with Python 3.12: all conformance tests pass (0.3.0, 2026-10-01). |
 | Worker Python | The common base's Python made by `tools/make_env.py` (CPython 3.12). The worker wrapper itself needs Python 3.10 or newer. |
-| Common base | `apctt-base-9e7fe1324bb6`, built and checked with `tools/make_env.py` on macOS arm64 (CPU development build, 2026-10-10). The CUDA build on the event machines (Ubuntu 24.04, RTX 3070 Laptop GPU) is not yet verified. |
-| GPU | The CUDA dummy example passed on the event machine (RTX 3070 Laptop GPU, Python 3.12) for kit 0.2.1; not yet re-recorded with 0.3.0's PDF input. |
+| Common base | `apctt-base-9e7fe1324bb6`, built and checked with `tools/make_env.py` on macOS arm64 (CPU development build, 2026-10-10). The CUDA build on the event machines (Asus TUF Dash F15 FX516PR-HN002, Ubuntu 24.04, RTX 3070 Laptop GPU) is not yet verified. |
+| GPU | GPU/CUDA tests (AC-29..AC-34, the CUDA dummy example) were run with kit 0.3.0 on an RTX 3070 Laptop GPU (Ubuntu 24.04.5, driver 595.91.07, torch 2.11.0+cu128, Python 3.12) on 2026-09-30, with PDF input. Since 0.3.0 only the dummy's checklist check and `config/cuda-example.json` changed. Not re-run for 0.5.0; NOT RUN on the final event machines (Asus TUF Dash F15 FX516PR-HN002). The GPU measurement of the model catalogue is not measured yet. |
 
 ## Licence
 
@@ -562,8 +642,11 @@ The kit's own code and documents are MIT licensed ([LICENSE](LICENSE)). Bundled 
 Apache-2.0 and installed dependencies keep their own licences
 ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). Your module, model and data are not covered.
 
-The organizer confirmed the licence rules on 2026-10-10: you license your own work (Stage 1 module,
-rules and trained weights, Stage 2 web code) under Apache-2.0 or MIT; strong copyleft (AGPL, GPL
+The organizer confirmed the licence rules on 2026-10-10 and made your own work MIT only on
+2026-10-13 (decision D72): you license your own work (Stage 1 module, rules and trained weights,
+Stage 2 web code) under MIT, and Apache-2.0 is no longer accepted for it; third-party components
+and catalogue models keep their own licences, and weights you derive from a catalogue model keep
+its LICENSE and NOTICE; strong copyleft (AGPL, GPL
 and similar) and non-commercial, research-only or otherwise use-restricted components are refused;
 public models come only from the organizer's model catalogue (`contracts/model-catalog.json`),
 whose weights you never ship.
@@ -573,10 +656,9 @@ them arises later, your team bears the legal responsibility and the award is rev
 D66, 2026-10-10). You keep ownership of your work: you submit
 it as open source and you do not assert patent, copyright, trade-secret or other
 intellectual-property claims over it against the organizer, APCTT or anyone who uses it under that
-licence (decision D54, 2026-10-10; the clause wording is under the organizer's legal review and the
-official participation terms prevail; the clause is in LICENSING §2.1). Details, permissive
+licence (decision D54, 2026-10-10; the clause is in LICENSING §2.1). Details, permissive
 alternatives and how to check your submission with `tools/check_licenses.py` (it flags components
-from their declared metadata only; it is not legal advice and your team remains responsible):
+from their declared metadata; HQ decides flagged items after submission):
 [LICENSING](docs/participant/LICENSING.md). PyTorch and NVIDIA's CUDA libraries come with their own
 terms: when `tools/make_env.py` installs them for development from the official index you accept
 those terms yourself (NVIDIA's licence agreements are in the licence files of the NVIDIA CUDA library wheels

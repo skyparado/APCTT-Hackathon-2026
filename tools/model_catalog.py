@@ -441,9 +441,10 @@ def markdown(catalog: Catalog) -> str:
         "the model store of "
         "each evaluation machine (the worker finds it in `APCTT_MODEL_STORE`). Only these models "
         "and weights your team trained (including fine-tunes and adapters of a catalogue model, "
-        "named by `base_model`) may be used; a public model outside the catalogue cannot be used, "
-        "because it is not available offline and public weights may not be shipped in your zip "
-        "(interpretation, to be confirmed). The files of a catalogue model are never in your zip: "
+        "named by `base_model`) may be used; a public model outside the catalogue cannot be used: "
+        "each evaluation machine has one shared read-only model store, which cannot hold per-team "
+        "models for this many teams, and public weights may not be shipped in your zip (decision "
+        "D80). The files of a catalogue model are never in your zip: "
         "`tools/make_submission.py` refuses any file with the bytes of a catalogue weight file "
         "(the sha256 values below), however it is named or declared.",
         "",
@@ -470,10 +471,12 @@ def markdown(catalog: Catalog) -> str:
         ]
     for model in large:
         lines += [
-            f"**Cold-load warning, `{model.id}`:** every case reads "
-            f"{_size(model.download_bytes)} of bf16 weights from disk and quantises them on the "
-            "GPU before the first token, inside the 3-minute limit (D41). Time the load on your "
-            "machine first, keep the generation short, and have a smaller model as a fallback.",
+            f"**Cold-load warning, `{model.id}`:** every case streams "
+            f"{_size(model.download_bytes)} of bf16 weights from the SSD and quantises them on "
+            "the GPU before the first token, inside the 3-minute limit (D41). The event machine "
+            "has 16 GB of RAM (D76), which cannot keep these weights in the page cache between "
+            "cases, so no case starts warm. Time the load on your machine first, keep the "
+            "generation short, and have a smaller model as a fallback.",
             "",
         ]
     lines += [

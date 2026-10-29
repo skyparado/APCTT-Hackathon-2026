@@ -29,7 +29,7 @@ def make_config(
     base = json.loads((ROOT / "config/dev.json").read_text())
     base["data_dir"] = str(tmp_path / "server_data")
     base["worker_tmp_dir"] = str(tmp_path / "worker_tmp")
-    base["checklist_path"] = str(ROOT / "contracts/checklist.demo.json")
+    base["checklist_path"] = str(ROOT / "contracts/checklist.official.json")
     module = base["module"]
     if fake:
         module.update(

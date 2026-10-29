@@ -1,6 +1,6 @@
 # API reference
 
-kit 0.4.0 | API `apctt-api-v0.2-draft`
+kit 0.5.0 | API `apctt-api-v0.2-draft`
 
 The server exposes seven routes. There is no cancel, batch, upload, callback, WebSocket or scoring
 endpoint, and no training endpoint. The frozen OpenAPI description is `contracts/openapi.json`

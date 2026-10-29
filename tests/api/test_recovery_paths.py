@@ -151,7 +151,7 @@ def test_unusable_data_dir_is_refused(tmp_path: Path) -> None:
     config.update(
         data_dir=str(blocker),
         worker_tmp_dir=str(tmp_path / "worker_tmp"),
-        checklist_path=str(ROOT / "contracts/checklist.demo.json"),
+        checklist_path=str(ROOT / "contracts/checklist.official.json"),
     )
     config["module"].update(
         module_root=str(ROOT),

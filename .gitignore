@@ -8,3 +8,5 @@ data/cases/*/request.json
 data/heldout/*/request.json
 # all-rights-reserved notice on every page despite NTRS public-use marking; kept local until cleared
 data/heldout/NTRS-20160009293/D001.pdf
+src/*.egg-info/
+team/out/
