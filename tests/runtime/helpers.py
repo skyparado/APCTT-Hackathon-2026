@@ -18,10 +18,9 @@ from apctt_runtime import protocol
 
 ROOT = Path(__file__).resolve().parents[2]
 FAKES = Path(__file__).resolve().parent / "fakes"
-REQUEST_CASE: dict[str, Any] = json.loads((ROOT / "docs/EXAMPLE_REQUEST.json").read_text())["case"]
-EXAMPLE_PDF = ROOT / "docs/EXAMPLE_REPORT.pdf"
-# The stored view the supervisor receives: page counts, no base64 payload.
-CASE: dict[str, Any] = stored_case(REQUEST_CASE, [2])
+# Protocol tests run a two-criterion DEMO checklist to keep results short; the example request
+# (docs/EXAMPLE_REQUEST.json) is for the official checklist of config/dev.json (decision D74), so
+# its case gets the DEMO version here. OFFICIAL is the checklist the shipped CPU example runs.
 CHECKLIST = ChecklistPayload.model_validate(
     {
         "version": "DEMO-CHECKLIST-NOT-OFFICIAL",
@@ -31,6 +30,15 @@ CHECKLIST = ChecklistPayload.model_validate(
         ],
     }
 )
+_OFFICIAL = json.loads((ROOT / "contracts/checklist.official.json").read_text())
+OFFICIAL = ChecklistPayload.model_validate(
+    {"version": _OFFICIAL["version"], "criteria": _OFFICIAL["criteria"]}
+)
+EXAMPLE_CASE: dict[str, Any] = json.loads((ROOT / "docs/EXAMPLE_REQUEST.json").read_text())["case"]
+REQUEST_CASE: dict[str, Any] = {**EXAMPLE_CASE, "checklist_version": CHECKLIST.version}
+EXAMPLE_PDF = ROOT / "docs/EXAMPLE_REPORT.pdf"
+# The stored view the supervisor receives: page counts, no base64 payload.
+CASE: dict[str, Any] = stored_case(REQUEST_CASE, [2])
 CPU = Compute.model_validate(
     {
         "device": "cpu",
@@ -56,6 +64,7 @@ def make_spec(
     extra_env: dict[str, str] | None = None,
     launcher: tuple[str, ...] = (),
     document_files: tuple[Path, ...] | None = None,
+    checklist: ChecklistPayload | None = None,
 ) -> RunSpec:
     run_id = uuid.uuid4().hex
     artifact_dir = tmp_path / "artifacts" / run_id
@@ -68,7 +77,7 @@ def make_spec(
         run_id=run_id,
         case=value,
         case_meta=CaseMeta.from_case(value),
-        checklist=CHECKLIST,
+        checklist=checklist or CHECKLIST,
         module={
             "package_id": "fake",
             "entrypoint": entrypoint,

@@ -1,6 +1,6 @@
 # Configuration reference
 
-kit 0.4.0 | config format `apctt-config-v1`
+kit 0.5.0 | config format `apctt-config-v1`
 
 The server reads one JSON file at start-up and never changes it while running. Requests cannot
 change any setting (profile, device, seed, time limit, module, paths). To change something, edit
@@ -33,7 +33,7 @@ All start-up codes: [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §6.
 | `data_dir` | `"../server_data"` | Job store, results, raw outputs, logs, event log. |
 | `worker_tmp_dir` | `"../worker_tmp"` | Parent of the per-case scratch directories. |
 | `schema_version` | `"apctt-pdf-example-v1"` | Every case must carry this `schema_version`. |
-| `checklist_path` | `"../contracts/checklist.demo.json"` | Checklist file (§4). Every case must carry its `version`. |
+| `checklist_path` | `"../contracts/checklist.official.json"` | Checklist file (§4). Every case must carry its `version`. The official checklist (decision D74) is the default of `config/dev.json`, of the CUDA example configuration and of your configuration of README step 6. |
 | `retry_after_seconds` | `1` | Value of the `Retry-After` header on `503 BUSY` and `NOT_READY`. |
 | `limits` | see §3 | Size and time limits. |
 | `compute` | see §2 | Device and determinism settings passed to your module. |
@@ -63,12 +63,17 @@ verified in this kit version.
 
 ## 3. `limits`
 
+The four input limits of `config/dev.json` are the **official input limits** of the event (decision
+D77, 2026-10-13); the organizer's servers use the same values. They fit the public sample cases
+(`contracts/public-cases.json`, 99 reports: median 7.9 MiB and 44 pages per PDF, 95% under 28.8 MiB
+and 126 pages, the largest 49.3 MiB and 208 pages; PROBLEM_DESCRIPTION §5.2).
+
 | Field | `config/dev.json` | What happens at the limit |
 |---|---|---|
-| `max_request_bytes` | `67108864` (64 MiB) | Larger request body → `413 REQUEST_TOO_LARGE`. PDFs travel as base64, which is about 4/3 of the file size. |
-| `max_documents` | `20` | More documents in a case → `422`, rule `max_documents`. |
-| `max_document_bytes` | `20971520` (20 MiB) | A larger PDF (decoded size) → `422`, rule `max_document_bytes`. |
-| `max_total_pages` | `2000` | More pages in all PDFs together → `422`, rule `max_total_pages`. |
+| `max_request_bytes` | `83886080` (80 MiB, official) | Larger request body → `413 REQUEST_TOO_LARGE`. PDFs travel as base64, which is about 4/3 of the file size, so all PDFs of one case together can be at most about 59 MiB. |
+| `max_documents` | `3` (official) | More documents in a case → `422`, rule `max_documents`. |
+| `max_document_bytes` | `52428800` (50 MiB, official) | A larger PDF (decoded size) → `422`, rule `max_document_bytes`. |
+| `max_total_pages` | `300` (official) | More pages in all PDFs together → `422`, rule `max_total_pages`. |
 | `max_result_bytes` | `2097152` (2 MiB) | Larger `result.json` → job fails with `WORKER_PROTOCOL_ERROR`; the first 2 MiB are kept. |
 | `deadline_ms` | `180000` (3 min) | Whole-case time limit (start, load, assess, cleanup, exit) → `TIMEOUT`, reported as "The model could not process the documents within the 180-second limit." The event uses the same 3-minute limit. |
 | `termination_grace_ms` | `2000` | Time between SIGTERM and SIGKILL when a run is stopped. |
@@ -81,11 +86,19 @@ verified in this kit version.
 | `max_stack_frames` | `10` | Server stack frames shown for `500` in the dev profile. |
 
 All values must be positive integers (`min_free_disk_bytes` may be 0). `deadline_ms` 180000
-(3 minutes per case, model loading included) is the event's limit. The other values are development
-defaults until the organizer announces the official ones. Lower `deadline_ms` locally to see how
+(3 minutes per case, model loading included) is the event's limit. The organizer's evaluation servers
+use the same values for every field of this table. Lower `deadline_ms` locally to see how
 much margin your module has.
 
 ## 4. Checklist file
+
+The kit has two checklist files. `contracts/checklist.official.json` is the official checklist
+(`APCTT-2026-CHECKLIST-v1`, `"official": true`, criteria `APCTT-C01` to `APCTT-C12`, decision D74):
+the organizer runs every package with it, it is the default of `config/dev.json` and of your
+configuration of README step 6, and `docs/EXAMPLE_REQUEST.json`, `tools/make_request.py` and
+`tools/get_public_cases.py` carry its version. `contracts/checklist.demo.json` is a DEMO checklist
+with two criteria, for the protocol tests and for one run with a changed checklist (below); it is
+shown here because it is short:
 
 ```json
 {
@@ -104,9 +117,11 @@ much margin your module has.
 | `official` | Optional boolean, default `false`. Only organizer checklists are `true`. |
 | `criteria` | At least one; `criterion_id` is an identifier (unique), `description` a non-blank string. |
 
-Your module receives `version` and `criteria` only. To test that your module does not depend on the
-DEMO IDs, copy this file, change the IDs, descriptions and `version`, point `checklist_path` at the
-copy and send cases with the new `checklist_version`.
+Your module receives `version` and `criteria` only. To test that your module does not depend on
+the criterion IDs, copy a checklist file (the DEMO one is the quickest), change the IDs,
+descriptions and `version`, point `checklist_path` of a copy of your configuration at it and send
+cases with the new `checklist_version` (`tools/make_request.py --checklist <copy>` writes it).
+That is the only use of the DEMO checklist: the organizer runs the official one.
 
 ## 5. `module`
 
@@ -178,13 +193,13 @@ The token is never logged or returned. Local development normally leaves it `nul
   "data_dir": "../server_data",
   "worker_tmp_dir": "../worker_tmp",
   "schema_version": "apctt-pdf-example-v1",
-  "checklist_path": "../contracts/checklist.demo.json",
+  "checklist_path": "../contracts/checklist.official.json",
   "retry_after_seconds": 1,
   "limits": {
-    "max_request_bytes": 67108864,
-    "max_documents": 20,
-    "max_document_bytes": 20971520,
-    "max_total_pages": 2000,
+    "max_request_bytes": 83886080,
+    "max_documents": 3,
+    "max_document_bytes": 52428800,
+    "max_total_pages": 300,
     "max_result_bytes": 2097152,
     "deadline_ms": 180000,
     "termination_grace_ms": 2000,

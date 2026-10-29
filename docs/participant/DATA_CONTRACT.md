@@ -1,6 +1,6 @@
 # Data contract — request, case and result
 
-kit 0.4.0 | API `apctt-api-v0.2-draft` | schema `apctt-pdf-example-v1` (dev)
+kit 0.5.0 | API `apctt-api-v0.2-draft` | schema `apctt-pdf-example-v1` (dev)
 
 This page defines every field the server accepts and every field your module returns, the rules
 the server enforces, and the exact rule IDs it reports. Machine-readable schemas are in
@@ -23,14 +23,14 @@ the server enforces, and the exact rule IDs it reports. Machine-readable schemas
 |---|---|---|
 | `schema_version` | yes | Must equal the server's schema version (`apctt-pdf-example-v1` in dev; see `GET /v1/package`). |
 | `input_profile` | yes | Must be `pdf_report` (the only supported profile). |
-| `checklist_version` | yes | Must equal the server's checklist version (`DEMO-CHECKLIST-NOT-OFFICIAL` in dev). |
+| `checklist_version` | yes | Must equal the version of the server's checklist: `APCTT-2026-CHECKLIST-v1` for the official checklist (`config/dev.json`, your configuration of README step 6, the organizer's servers; decision D74). |
 | `case_id` | yes | Identifier (§1.5). Neutral ID; different from `request_id`; may repeat across requests. |
 | `assessment_as_of` | yes | `"YYYY-MM-DD"` (a real calendar date) or `null`. The server never fills in today's date. |
 | `assessment_target` | yes | Object: `target_id` (identifier), `type` (`component`, `subsystem`, `system` or `technology`), `description` (non-blank string). |
 | `intended_application` | yes | Non-blank string. |
 | `intended_environment` | yes | Non-blank string. |
 | `title` | yes | Non-blank string. |
-| `documents` | yes | Array of 1 to `max_documents` (20 in dev) documents. |
+| `documents` | yes | Array of 1 to `max_documents` (3, the official limit, decision D77) documents. |
 | `description` | no | Non-blank string. |
 | `benefits` | no | Non-blank string. |
 | `sdg_targets` | no | Array of distinct integers from 6, 11, 13, 14. |
@@ -47,7 +47,7 @@ Every document is a PDF file, sent inside the JSON as base64.
 | `document_date` | yes | Non-blank string (any format) or `null`. |
 | `language` | yes | Must be `en`. |
 | `format` | yes | Must be `pdf`. |
-| `content_base64` | yes | The PDF file, standard base64 (RFC 4648 alphabet, with padding, no line breaks or spaces). Decoded, it must start with `%PDF-`, be at most `max_document_bytes` (20 MiB in dev) and be a PDF the server can open and count pages of. All documents together hold at most `max_total_pages` pages (2 000 in dev). |
+| `content_base64` | yes | The PDF file, standard base64 (RFC 4648 alphabet, with padding, no line breaks or spaces). Decoded, it must start with `%PDF-`, be at most `max_document_bytes` (50 MiB, official) and be a PDF the server can open and count pages of. All documents together hold at most `max_total_pages` pages (300, official). |
 | `sha256` | yes | SHA-256 of the decoded PDF bytes, 64 lowercase hexadecimal characters. It must match. |
 
 `tools/make_request.py` builds these fields from PDF files for you (see the README, step 7).
@@ -82,8 +82,8 @@ module's job; choose the tools that give the best assessment. Pages are numbered
   order mark, no `Content-Encoding` other than `identity`. Duplicate keys, `NaN`, `Infinity`,
   numbers too large for a float, integers longer than 4 300 digits, lone surrogates and very deep
   nesting are rejected as `INVALID_JSON`.
-- **Size**: the body may not exceed `max_request_bytes` (64 MiB in dev; base64 makes a PDF about
-  4/3 of its file size). The limit is enforced while
+- **Size**: the body may not exceed `max_request_bytes` (80 MiB, official; base64 makes a PDF about
+  4/3 of its file size, so all PDFs of a case together can be at most about 59 MiB). The limit is enforced while
   reading, with or without `Content-Length`. Nothing is truncated or summarized; the request is
   rejected (`413 REQUEST_TOO_LARGE`).
 - **Order of checks**: size and JSON → schema → input profile → versions → document checks
@@ -113,7 +113,7 @@ Each row was produced by changing one thing in `docs/EXAMPLE_REQUEST.json`.
 | document `format` is `"docx"` | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].format` | `allowed_value` | pdf |
 | `content_base64` is not base64 (or has line breaks or wrong padding) | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].content_base64` | `base64_content` | strict standard base64 |
 | `content_base64` decodes to a text file | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].content_base64` | `pdf_signature` | a PDF file (%PDF- header) |
-| a PDF larger than 20 MiB | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].content_base64` | `max_document_bytes` | at most 20971520 bytes per document |
+| a PDF larger than 50 MiB | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].content_base64` | `max_document_bytes` | at most 52428800 bytes per document |
 | a damaged or password-protected PDF | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].content_base64` | `pdf_readable` | a PDF the server can open and count pages of |
 | `sha256` of another file | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].sha256` | `document_sha256_match` | SHA-256 of the decoded document |
 | `sha256` in upper case | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents[0].sha256` | `sha256_pattern` | 64 lowercase hexadecimal characters |
@@ -122,9 +122,9 @@ Each row was produced by changing one thing in `docs/EXAMPLE_REQUEST.json`.
 | `sdg_targets` is `[7]` | 422 | `REQUEST_VALIDATION_ERROR` | `case.sdg_targets[0]` | `allowed_value` | one of 6, 11, 13, 14 |
 | `input_profile` is `"canonical_report_text"` | 422 | `UNSUPPORTED_INPUT_PROFILE` | `case.input_profile` | `supported_input_profile` | pdf_report |
 | `schema_version` is `"apctt-v04"` | 422 | `VERSION_MISMATCH` | `case.schema_version` | `profile_schema_version` | apctt-pdf-example-v1 |
-| `checklist_version` is `"OFFICIAL-1"` | 422 | `VERSION_MISMATCH` | `case.checklist_version` | `profile_checklist_version` | DEMO-CHECKLIST-NOT-OFFICIAL |
-| 21 documents | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents` | `max_documents` | at most 20 documents |
-| more than 2 000 pages in all PDFs | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents` | `max_total_pages` | at most 2000 pages in total |
+| `checklist_version` is `"OFFICIAL-1"` | 422 | `VERSION_MISMATCH` | `case.checklist_version` | `profile_checklist_version` | APCTT-2026-CHECKLIST-v1 |
+| 4 documents | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents` | `max_documents` | at most 3 documents |
+| more than 300 pages in all PDFs | 422 | `REQUEST_VALIDATION_ERROR` | `case.documents` | `max_total_pages` | at most 300 pages in total |
 | body is `[]` | 422 | `REQUEST_VALIDATION_ERROR` | `<body>` | `object` | JSON object |
 
 ## 2. Result
@@ -203,8 +203,10 @@ These checks are structural. They do not judge whether your evidence is convinci
 
 ## 3. Result examples
 
-All examples below are checked against `docs/EXAMPLE_REQUEST.json` and the DEMO checklist. That case
-has one PDF document `D001` (`docs/EXAMPLE_REPORT.pdf`, 2 pages). Page 1 says "A synthetic prototype
+All examples below are checked against the case of `docs/EXAMPLE_REQUEST.json` with the
+two-criterion DEMO checklist (`DEMO-CHECKLIST-NOT-OFFICIAL`, `DEMO-C01` and `DEMO-C02`), only to keep
+them short; with the official checklist every map has twelve entries, as in
+`docs/EXAMPLE_RESPONSE.json`. That case has one PDF document `D001` (`docs/EXAMPLE_REPORT.pdf`, 2 pages). Page 1 says "A synthetic prototype
 was tested in a laboratory water tank."; page 2 says "Measured results and acceptance criteria are
 not supplied.".
 

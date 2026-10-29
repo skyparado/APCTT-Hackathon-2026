@@ -1,31 +1,37 @@
 # Submission, data declaration and handover
 
-kit 0.4.0
+kit 0.5.0
 
-This page lists what you send to the organizer and when: the three submissions, the zip, the data
-declaration and the handover items. The submission channel, deadlines and the official checklist
-are announced by the organizer separately; they are not part of this kit. The challenge as a whole,
+This page lists what you send to the organizer and when: up to two submissions, the zip, the data
+declaration and the handover items. The submission channel and the deadlines are published on the
+official competition website, with the dates (decision D81); they are not part of this kit. The time of receipt of a
+submission is the one the submission channel records (decision D80). The official checklist and the public sample
+cases are in the kit ([PROBLEM_DESCRIPTION.md](PROBLEM_DESCRIPTION.md) §5). The challenge as a whole,
 including how submissions are run and scored: [PROBLEM_DESCRIPTION.md](PROBLEM_DESCRIPTION.md).
 
 ## 1. What you send, and what comes back
 
-### 1.1 Three submissions
+### 1.1 Up to two submissions
 
-| Submission | Cases it runs | What you get back | Scored |
-|---|---|---|---|
-| 1 — check | The public sample cases | PASS or FAIL, and per case: status, TRL, error code, the server's fixed failure sentence, output issues (path and rule), warning codes, timings | No |
-| 2 — interim check | A separate interim case set, never reused in the final set | The same diagnostics, plus your automatic scores A and B and their total renormalised to 45:40, privately (no expected answers, no per-case scores) | No (not counted) |
-| 3 — final | The frozen hidden set (and 10 more hidden cases for finalists) | A receipt: accepted or refused, the hashes of your zip and package, the base and the models | **Yes: the only scored submission** |
+The organizer decided on 2026-10-13 (decision D73): **"Each team may submit its Stage 1 model up
+to two times. The latest valid submission received by the deadline will be treated as the final
+model."**
 
-Each submission is the same kind of zip, made with `tools/make_submission.py` (§1.2), and is
-checked in full at intake with the same published rules for every team. Passing submission 1 or 2
-is feedback, never an approval: nothing is approved in advance, and there are no exceptions. A
-refused zip comes back with the reasons. **Only submission 3 is scored: a team without a
-submission 3 is not scored or ranked, and no earlier submission is used instead.** Between
-submissions you may change your code, rules and catalogue models; what you send as submission 3 is
-what is run and scored. The defaults that the organizer has not yet confirmed (for example the
-numbers of cases, and that a refused submission 3 counts as none) are listed in
-[PROBLEM_DESCRIPTION.md](PROBLEM_DESCRIPTION.md) §18.
+| | What happens |
+|---|---|
+| Every submission (the first and the second) | Checked in full at intake with the same published rules for every team. You get back the intake receipt, **VALID** or **REFUSED** with the reasons (and any licence review items), the time it was received, the hashes of your zip and package, the common base (`base_id`) and the models; for a refused zip the package hash, base and models are given as far as they could be read from it ("not available" otherwise, for example for a zip that cannot be opened). For a valid submission you also get a diagnostic run of 3 public sample cases: per case the status, TRL, error code, the server's fixed failure sentence, output issues (path and rule), warning codes and timings. **No score.** |
+| Your final model | The **latest valid submission received by the deadline**. It is run once on the frozen hidden cases (and 10 more for finalists) and **scored**. If your second submission is refused, your first valid one stays your final model. |
+| No valid submission received by the deadline | Your team is **not scored and not ranked**. |
+
+Each submission is the same kind of zip, made with `tools/make_submission.py` (§1.2). Valid means
+that the intake accepted it: the same checks as `tools/make_submission.py --check`. A failed
+sample case does not make a submission invalid; there are no exceptions. One valid submission is enough; between your two submissions you may
+change your code, rules and catalogue models. A submission received after the deadline is not
+considered, and there is no third submission: a late or third upload is answered that it cannot be
+your final model and is not run (decision D81). The time of receipt is the one the submission
+channel records (decision D80); the dates, the channels and when the reply comes back are
+published on the official competition website (decision D81). After the deadline the organizer tells each team
+which submission is its final model (decision D81).
 
 ### 1.2 The submission zip
 
@@ -37,7 +43,7 @@ these entries and leaves everything else out:
 
 | Entry | Contents |
 |---|---|
-| `participant_module/` | Your code and rules: `__init__.py`, `adapter.py` (entry point `participant_module.adapter:AssessmentModule`), `LICENSE` (Apache-2.0 or MIT), `THIRD_PARTY_NOTICES.md` ([LICENSING.md](LICENSING.md) §2), and any third-party pure-Python modules you copied in (§5) |
+| `participant_module/` | Your code and rules: `__init__.py`, `adapter.py` (entry point `participant_module.adapter:AssessmentModule`), `LICENSE` (the MIT text, §5), `THIRD_PARTY_NOTICES.md` ([LICENSING.md](LICENSING.md) §2), and any third-party pure-Python modules you copied in (§5) |
 | `assets/` | Only weights and rules your team trained or wrote (may be empty); passed to `load()` as `asset_root` |
 | `submission.json` | `submission_version`, `team`, `package_id`, `package_version`, `base_id`, `declared_package_sha256`, `license`, `compute`, `settings` and `models` (`contracts/submission.schema.json`) |
 | `declaration.json` | The data declaration (§3) |
@@ -53,8 +59,9 @@ these entries and leaves everything else out:
   zip. A model outside the catalogue is refused, whatever its licence.
 - `models` also lists the weights your team trained and ships in `assets/` or
   `participant_module/`: `{"name", "path", "team_trained": true}`, optionally with `license`
-  (Apache-2.0 or MIT), `sha256` and `description`. A fine-tune or adapter of a catalogue model
-  names it in `base_model` (a catalogue id). Every weight file over 50 MiB must be covered by such
+  (MIT), `sha256` and `description`. A fine-tune or adapter of a catalogue model names it in
+  `base_model` (a catalogue id) and stays subject to that model's licence as well: keep the
+  model's `LICENSE` and `NOTICE` files with your weights. Every weight file over 50 MiB must be covered by such
   an entry. A copy of a catalogue weight file is refused even when declared here: the catalogue
   records the size and sha256 of every catalogue weight file, and the tool compares every file of
   the bundle with them.
@@ -155,8 +162,16 @@ If your team did not train anything, declare `no_team_training`. Example structu
 | `data_sources[].license` | The licence or terms of use of the source: an SPDX identifier, a licence name or the URL of the terms ([LICENSING.md](LICENSING.md) §5). |
 | `inference_assets` | Everything needed to run inference (§4). |
 
-The example is a structure, not a required schema; the organizer will announce the official
-declaration format.
+The example is a structure, not a fixed schema (decision D81): the checks read `example_only`,
+`team`, `package_id`, `package_version`, `declared_package_sha256` and `data_sources[].license`;
+write the rest so that a reader can follow where your data came from.
+
+If you used the public sample cases (§5.2 of the problem description) to develop, tune or check
+your module, declare them like any other source: `"source"` "APCTT public sample cases
+(contracts/public-cases.json, USGS reports)", the kit version as `"version"`, your `"role"`,
+`"label_origin"` "organizer's estimated TRL per report; not expert labels" if you used
+`--labels`, and `"license"` "U.S. public domain (USGS); some figures third-party, see the
+manifest's licence_note".
 
 ## 4. Handover
 
@@ -172,28 +187,36 @@ Link your execution package and follow-on development materials by version and h
   `no_team_training`.
 
 The Stage 2 application uses the same frozen assessment pipeline, so the package you hand over must
-be the one that produced your assessment results.
+be the one that produced your assessment results. You develop the Stage 2 web system on site,
+during the Stage 2 event, and merge it with this package on the event computer itself; there is no
+advance upload of web code (decision D80, [PROBLEM_DESCRIPTION.md](PROBLEM_DESCRIPTION.md) §14).
 
 ## 5. Licence of your work
 
 The kit's MIT licence covers the kit only. Your module, weights, rules and data remain yours. So that
 the organizer can run, demonstrate, keep and hand over your work (§4), these rules apply; the
-organizer confirmed them on 2026-10-10 (decision D53), and the official participation terms will
-carry them:
+organizer confirmed them on 2026-10-10 (decision D53) and made your own work MIT only on
+2026-10-13 (decision D72), and the official participation terms will carry them:
 
-- License your own code, rules and trained weights under Apache-2.0 or MIT: put the licence text in
-  `participant_module/LICENSE` and the same identifier in `"license"` of `submission.json`. The same
-  rule applies to the code of your Stage 2 web system (`LICENSE` at its root, and `"license"` in
-  your `package.json` if you set it). Any other licence, or a missing declaration or licence file,
-  is refused.
+- License your own code, rules and trained weights (adapters and fine-tunes included) under
+  **MIT**: put the MIT text in `participant_module/LICENSE` and `"license": "MIT"` in
+  `submission.json`. The same rule applies to the code of your Stage 2 web system (`LICENSE` at its
+  root, and `"license"` in your `package.json` if you set it). Any other licence, Apache-2.0
+  included (earlier versions of the kit allowed it; decision D72 of 2026-10-13 made it MIT only so
+  that APCTT can use your work later without a licence problem), or a missing declaration or
+  licence file, is refused. Weights derived from a catalogue model also stay subject to that
+  model's licence: keep its `LICENSE` and `NOTICE` files with them.
 - Use only third-party packages, front-end libraries, fonts and models whose licences the policy
-  allows, and list them with version and licence in `participant_module/THIRD_PARTY_NOTICES.md`.
+  allows (third-party components keep their own licences: Apache-2.0 and MIT components stay
+  allowed), and list them with version and licence in `participant_module/THIRD_PARTY_NOTICES.md`.
   Strong copyleft (AGPL, GPL, SSPL, EUPL, OSL, RPL), non-commercial, research-only,
   revenue-capped and commercial-only components are refused; weak copyleft (LGPL, EPL, CDDL) is
   reviewed; MPL-2.0 is allowed.
 - Use public models only from the model catalogue (`contracts/model-catalog.json`, named in
   `submission.json` by `catalog_id`; any other public model is refused and public model weights
-  are never shipped), and declare the licence of every data source (§3).
+  are never shipped: each evaluation machine has one shared read-only model store, which cannot
+  hold per-team models for this many teams, decision D80), and declare the licence of every data
+  source (§3).
 - You may copy third-party pure-Python modules into `participant_module/`, each listed with its
   licence in `participant_module/THIRD_PARTY_NOTICES.md`; compiled extensions are refused. If a
   licence or security problem with code you included arises later, your team bears the legal
@@ -202,22 +225,19 @@ carry them:
 - Ship no packages at all: PyTorch, NVIDIA CUDA packages and every other package come from the
   common base environment, which the organizer installs.
 
-You keep ownership of your work. By submitting it under Apache-2.0 or MIT you submit it as open
-source, and you do not assert, and will not assert, patent, copyright, trade-secret or other
+You keep ownership of your work. By submitting it under MIT you submit it as open source, and you
+do not assert, and will not assert, patent, copyright, trade-secret or other
 intellectual-property claims over the submitted work, including its follow-on development, against
 the organizer, APCTT or anyone who uses it under that licence; you warrant that you have the right
 to submit everything in your submission; third-party components keep their own licences. The
-organizer decided this on 2026-10-10 (decision D54); the clause wording is under the organizer's
-legal review and the official participation terms prevail. The clause, and what Apache-2.0 and MIT
-already provide (Apache-2.0 has an express patent licence, MIT has none): [LICENSING.md](LICENSING.md)
+organizer decided this on 2026-10-10 (decision D54). The clause, and what MIT already provides
+(it has no express patent licence, which the covenant supplies): [LICENSING.md](LICENSING.md)
 §2.1.
 
-The licence checker `tools/check_licenses.py` only flags components from their declared metadata;
-your team remains responsible for what it submits, and the organizer decides the flagged items after
-the submission.
+The licence checker `tools/check_licenses.py` flags components from their declared metadata; HQ
+decides flagged items after submission.
 What is allowed, what is refused, permissive alternatives, what the checker does and does not
-check, and how to run it: [LICENSING.md](LICENSING.md). Neither this page nor the checker is legal
-advice.
+check, and how to run it: [LICENSING.md](LICENSING.md).
 
 ## 6. Final check
 
@@ -232,4 +252,6 @@ Work through the list in [MODULE_GUIDE.md](MODULE_GUIDE.md) §9, then confirm:
 - [ ] Your declaration lists every data source, its licence and the label origin of any labels you
       used.
 - [ ] Your handover links match the exact files you submit.
-- [ ] For the final round: your zip is uploaded as **submission 3** before the deadline.
+- [ ] `submission.json` says `"license": "MIT"` and `participant_module/LICENSE` holds the MIT text.
+- [ ] Your final model is uploaded before the deadline: the latest valid submission received by
+      the deadline counts, and each team has at most two submissions.
