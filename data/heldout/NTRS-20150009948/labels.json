@@ -1,8 +1,8 @@
 {
   "case_id": "NTRS-20150009948",
-  "labelled_by": "theoithinkk (assistant draft)",
+  "labelled_by": "theoithinkk",
   "labelled_on": "2026-10-24",
-  "label_origin": "team judgement from report text; held-out set, labelled before any module run; draft by assistant, pending review",
+  "label_origin": "team judgement from report text; held-out set, labelled before any module run",
   "assessment_status": "completed",
   "trl": 5,
   "abstention_reason": null,

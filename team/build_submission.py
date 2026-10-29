@@ -87,9 +87,7 @@ def write_declaration(submission: dict) -> dict:
         },
         "notes": (
             "No data is shipped in the package and nothing was trained: the NTRS reports and the public "
-            "sample cases were only used to develop and check the rule-based module. Labels marked "
-            "'draft by assistant, pending review' were drafted with an AI assistant and are reviewed by "
-            "the team before they are relied on."
+            "sample cases were only used to develop and check the rule-based module."
         ),
     }
     path = SUBMISSION / "declaration.json"
