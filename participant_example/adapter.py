@@ -1,6 +1,9 @@
 """CPU format example of the AssessmentModule protocol (SPEC-09). DEMO rules only.
 
 Entry point: participant_example.adapter:AssessmentModule
+It runs with the checklist of the server configuration (config/dev.json: the official checklist,
+decision D74) and takes the criteria from it; module.settings.criteria_phrases must name exactly
+those criteria. A criterion with an empty phrase list is not looked for (insufficient evidence).
 Replace this class with your frozen assessment pipeline; keep the four methods.
 """
 
@@ -22,8 +25,6 @@ class AssessmentModule:
 
     def load(self, config: Mapping[str, Any], asset_root: Path) -> None:
         checklist = config["checklist"]
-        if checklist["version"] != demo_rules.DEMO_CHECKLIST_VERSION:
-            raise ValueError("the CPU example only runs with the DEMO checklist")
         self._checklist_version = checklist["version"]
         self._criterion_ids = [c["criterion_id"] for c in checklist["criteria"]]
         settings = config["module"]["settings"]
@@ -43,14 +44,19 @@ class AssessmentModule:
             missing_evidence=observed["missing_evidence"],
             error_code=None,
         )
-        all_met = all(v == "met" for v in observed["criterion_status"].values())
+        # Only the criteria with configured phrases decide: all of them met gives completed.
+        searched = [cid for cid in self._criterion_ids if self._phrases[cid]]
+        all_met = bool(searched) and all(
+            observed["criterion_status"][cid] == "met" for cid in searched
+        )
         if all_met and self._completed_trl is not None:
             result.update(
                 assessment_status="completed",
                 predicted_trl=self._completed_trl,
                 abstention_reason=None,
                 trl_rationale=(
-                    "DEMO rule: every DEMO criterion phrase was found; not a TRL judgment."
+                    "DEMO rule: a phrase was found for every criterion with configured phrases; "
+                    "not a TRL judgment."
                 ),
             )
         else:
