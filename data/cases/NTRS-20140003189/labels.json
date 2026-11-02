@@ -23,13 +23,7 @@
       "note": "mixed maturity: heritage parts"
     }
   ],
-  "criteria": {
-    "DEMO-C01": {
-      "status": "not met"
-    },
-    "DEMO-C02": {
-      "status": "not met"
-    }
-  },
+  "criteria": {},
+  "criteria_origin": "not labelled yet: ambiguous scope, so no level criterion can be derived from the evidence",
   "review_notes": "Deliberate abstention case. Alternative label: completed, TRL 2."
 }

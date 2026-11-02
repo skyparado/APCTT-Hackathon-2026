@@ -31,7 +31,7 @@
     }
   ],
   "criteria": {
-    "DEMO-C01": {
+    "APCTT-C04": {
       "status": "met",
       "pages": [
         {
@@ -44,9 +44,22 @@
         }
       ]
     },
-    "DEMO-C02": {
-      "status": "not met"
+    "APCTT-C05": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C06": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C07": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C08": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C09": {
+      "status": "insufficient evidence"
     }
   },
+  "criteria_origin": "derived from evidence[].trl_level (the TRL's own level met, higher levels insufficient evidence) and DEMO-C02 met (APCTT-C10 met); lower levels, APCTT-C11 and APCTT-C12 not labelled yet",
   "review_notes": "Negative result p.15: the 240-hr test shut down 72 hr early, so DEMO-C02 is marked not met."
 }

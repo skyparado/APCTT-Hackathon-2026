@@ -39,7 +39,8 @@ data/
 | `abstention_reason` | `null`, or one of `insufficient evidence`, `conflicting evidence`, `ambiguous scope`, `out of scope`. |
 | `trl_rationale` | Why this level and not the one above. Name the trap you avoided. |
 | `evidence[]` | Best sentences first: `trl_level`, `document_id`, `page`, `quote` (copied exactly from the PDF), `note`. |
-| `criteria` | Optional until the official checklist is out: `criterion_id -> {status, pages}`. Every `met` needs gold pages. |
+| `criteria` | `criterion_id -> {status, pages}`, IDs from `contracts/checklist.official.json`. Every `met` needs gold pages. A criterion left out is not scored by `team/regress.py`. |
+| `criteria_origin` | How `criteria` was filled. Most cases are still partial: see below. |
 | `labelled_by`, `labelled_on`, `label_origin` | Who, when (YYYY-MM-DD), and where the TRL came from. |
 
 ## Labelling rules
@@ -50,5 +51,16 @@ data/
 - From NASA TechPort use only the **current** TRL, and read the actual reports, not the summary
   (SUBMISSION 2). Do not copy a project-level TRL onto a component.
 - Mix levels (aim for low, mid and high TRLs) and include 1-2 cases where no TRL is determinable.
-- When the official checklist is published, update `checklist_version` in every `case.json` and
-  fill `criteria` with the official IDs.
+
+## Official criteria: what is labelled so far
+
+The cases moved from the DEMO checklist to `APCTT-2026-CHECKLIST-v1` by rule, without re-reading
+the reports:
+
+- the case's own TRL level (`APCTT-C0<trl>`) is `met`, on the pages of its `evidence[]`;
+- higher levels are `insufficient evidence`;
+- `APCTT-C10` is `met` where `DEMO-C02` was `met`.
+
+Still to label by reading each report: levels below the case's TRL, `APCTT-C11`, `APCTT-C12`,
+`APCTT-C10` where `DEMO-C02` was not `met`, and all of `NTRS-20140003189` (ambiguous scope). When a
+case is finished, say so in its `criteria_origin`.
