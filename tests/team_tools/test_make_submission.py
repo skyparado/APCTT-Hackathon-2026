@@ -31,7 +31,10 @@ BASE_ID = make_env.base_id(make_env.BASE_LOCK)
 CATALOG_ID = "qwen2.5-1.5b-instruct"
 FORBIDDEN_WORDS = ("approv", "exception", "proposal", "env_id")
 SUBMISSION_SCHEMA = json.loads((ROOT / "contracts/submission.schema.json").read_text())
-MIT_TEXT = "MIT License\n\nCopyright (c) 2026 Team 01\n\nPermission is hereby granted...\n"
+# The full MIT text with the team's copyright line (D72: the LICENSE must hold the MIT text).
+MIT_TEXT = (
+    (ROOT / "licenses/MIT.txt").read_text().replace("<year> <copyright holders>", "2026 Team 01")
+)
 ADAPTER = "class AssessmentModule:\n    pass\n"
 TEAM = "TEAM-01"
 ZIP_NAME = f"{TEAM}_submission.zip"
@@ -191,7 +194,7 @@ def test_packed_hash_is_what_the_kit_server_verifies(
     config.update(
         data_dir=str(tmp_path / "data"),
         worker_tmp_dir=str(tmp_path / "tmp"),
-        checklist_path=str(ROOT / "contracts/checklist.demo.json"),
+        checklist_path=str(ROOT / "contracts/checklist.official.json"),
     )
     config["module"].update(
         package_id="team-01-module",
@@ -260,6 +263,21 @@ REFUSALS: dict[str, tuple[Callable[[Path], None], str]] = {
     "git": (write("participant_module/.git/HEAD", "ref: x\n"), ".git"),
     "no licence file": (remove("participant_module/LICENSE"), "LICENSE"),
     "gpl": (edit_json("submission.json", license="GPL-3.0-only"), "GPL-3.0-only"),
+    # D72 (2026-10-13): the team's own work is MIT only; the message says what changed.
+    "apache": (
+        edit_json("submission.json", license="Apache-2.0"),
+        "Apache-2.0 is no longer accepted for the team's own work",
+    ),
+    "apache or mit": (edit_json("submission.json", license="MIT OR Apache-2.0"), "must be MIT"),
+    # D72: "license": "MIT" with another text in participant_module/LICENSE.
+    "apache text under mit": (
+        write("participant_module/LICENSE", (ROOT / "licenses/Apache-2.0.txt").read_text()),
+        "participant_module/LICENSE holds the Apache License 2.0 text",
+    ),
+    "short mit text": (
+        write("participant_module/LICENSE", "MIT License\n\nPermission is hereby granted...\n"),
+        "does not contain the MIT licence text",
+    ),
     "no notices": (remove("participant_module/THIRD_PARTY_NOTICES.md"), "THIRD_PARTY_NOTICES.md"),
     "no adapter": (remove("participant_module/adapter.py"), "adapter.py"),
     "no readme": (remove("README.md"), "README.md"),

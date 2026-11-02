@@ -97,10 +97,11 @@ def test_ac13_disconnect_then_get(tmp_path: Path) -> None:
 
 
 def test_cpu_example_outputs_satisfy_evidence_rules(tmp_path: Path) -> None:
-    """E23 (not a required node): the shipped CPU example passes SPEC-06 through the real API."""
+    """E23 (not a required node): the shipped CPU example passes SPEC-06 through the real API,
+    with the official checklist of config/dev.json (D74)."""
     config = base_config(tmp_path)
     checklist = Checklist.model_validate(
-        json.loads((ROOT / "contracts/checklist.demo.json").read_text())
+        json.loads((ROOT / "contracts/checklist.official.json").read_text())
     )
     with Server(tmp_path, config) as server, server.client() as client:
         for request_id, text in (

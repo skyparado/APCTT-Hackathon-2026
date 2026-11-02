@@ -1,0 +1,13 @@
+{
+  "submission_version": "apctt-submission-v3",
+  "team": "CACHE-KITA",
+  "package_id": "cache-kita-trl",
+  "package_version": "0.1.0",
+  "base_id": "apctt-base-9e7fe1324bb6",
+  "entrypoint": "participant_module.adapter:AssessmentModule",
+  "declared_package_sha256": null,
+  "license": "MIT",
+  "compute": {"device": "cpu"},
+  "settings": {},
+  "models": []
+}

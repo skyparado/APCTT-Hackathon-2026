@@ -232,6 +232,9 @@ def test_the_published_catalogue_is_the_verified_selection_for_the_reference_gpu
     assert catalog.status == "verified" and "author" not in raw  # no personal attribution (D71)
     budget = catalog.gpu_budget
     assert "RTX 3070 Laptop GPU" in budget["reference_gpu"] and budget["vram_gib"] == 8
+    # D76 (2026-10-13): the final event machine, named where the reference GPU is.
+    assert "Asus TUF Dash F15 FX516PR-HN002" in budget["reference_gpu"]
+    assert "D76" in budget["reference_gpu"] and catalog.updated == "2026-10-13"
     assert budget["target_peak_gib"] == 7.0 and budget["measured"] is False
     assert "RTX 3070 Laptop GPU with 8 GB VRAM" in raw["notes"][0]  # the reference GPU (e)
     categories = {m.category for m in catalog.models}
@@ -245,6 +248,7 @@ def test_the_published_catalogue_is_the_verified_selection_for_the_reference_gpu
         assert "check_models_gpu.py" in model.raw["notes"], model.id
         if float(model.raw["params_b"]) >= 6:  # 7-8B: the cold-load warning
             assert "COLD-LOAD WARNING" in model.raw["notes"], model.id
+            assert "16 GB of RAM" in model.raw["notes"], model.id  # D76: streamed every case
     for model in catalog.models:
         if model.load["quantization"] is None:
             assert model.raw.get("measured", False) is False, model.id
@@ -298,11 +302,14 @@ def test_the_participant_document_is_generated_from_the_catalogue() -> None:
     flat = " ".join(document.split())
     for phrase in (
         "reference GPU: RTX 3070 Laptop GPU",
+        "Asus TUF Dash F15 FX516PR-HN002",
         "VRAM figures are estimates",
         "tools/hq/check_models_gpu.py",
         "conditional on the GPU measurement",
         "Cold-load warning",
         "3-minute limit",
+        "16 GB of RAM",  # D76: the 7-8B weights are streamed from the SSD in every case
+        "streams",
     ):
         assert phrase in flat, phrase
     tool = [sys.executable, str(ROOT / "tools/model_catalog.py"), "--markdown"]

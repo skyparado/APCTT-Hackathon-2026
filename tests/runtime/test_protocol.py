@@ -11,10 +11,20 @@ from pathlib import Path
 from apctt_contracts.config import Checklist
 from apctt_contracts.hashing import sha256_hex
 from apctt_contracts.ipc import WorkerContext, WorkerEnvelope
+from apctt_contracts.pdf import stored_case
 from apctt_contracts.results import validate_result
 from apctt_runtime import protocol
 
-from .helpers import CASE, CHECKLIST, ROOT, make_spec, run_sync, stdout_json
+from .helpers import (
+    CASE,
+    CHECKLIST,
+    EXAMPLE_CASE,
+    OFFICIAL,
+    ROOT,
+    make_spec,
+    run_sync,
+    stdout_json,
+)
 
 
 def _raw(spec_dir: Path) -> bytes:
@@ -194,19 +204,27 @@ def test_ac39_worker_context_time_budget(tmp_path: Path) -> None:
 
 
 def test_cpu_example_module_output(tmp_path: Path) -> None:
-    """Not a required node: the shipped CPU example returns a contract-valid DEMO result."""
+    """Not a required node: the shipped CPU example, as config/dev.json runs it (the official
+    checklist, decision D74), returns a contract-valid DEMO result for the example request."""
     settings = json.loads((ROOT / "config/dev.json").read_text())["module"]["settings"]
     spec = make_spec(
         tmp_path,
         "participant_example.adapter:AssessmentModule",
         module_root=ROOT,
         settings=settings,
+        case=stored_case(EXAMPLE_CASE, [2]),
+        checklist=OFFICIAL,
     )
     outcome = run_sync(spec)
     assert outcome.result_origin == "module", outcome.output_issues
     result = outcome.result
     assert result["assessment_status"] == "abstained"
-    assert result["criterion_status"] == {"DEMO-C01": "met", "DEMO-C02": "insufficient evidence"}
-    evidence = result["evidence_reference"]["DEMO-C01"][0]
+    assert result["checklist_version"] == "APCTT-2026-CHECKLIST-v1"
+    ids = [f"APCTT-C{n:02d}" for n in range(1, 13)]
+    assert result["criterion_status"] == {
+        cid: "met" if cid == "APCTT-C04" else "insufficient evidence" for cid in ids
+    }
+    evidence = result["evidence_reference"]["APCTT-C04"][0]
     assert evidence == {"document_id": "D001", "page": 1, "supporting_span": "tested"}
-    assert result["missing_evidence"]["DEMO-C02"].strip()
+    assert "no page contains" in result["missing_evidence"]["APCTT-C10"]
+    assert "no phrase is configured" in result["missing_evidence"]["APCTT-C01"]

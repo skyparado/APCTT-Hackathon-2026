@@ -1,18 +1,15 @@
 # Licences: what you may use and what you declare (Stage 1 and Stage 2)
 
-kit 0.4.0 | licence policy 0.3.0 (`contracts/license-policy.json`)
+kit 0.5.0 | licence policy 0.4.0 (`contracts/license-policy.json`)
 
-**Status: confirmed by the organizer on 2026-10-10 (decision D53).** The rules for your own work
-(§2), third-party components (§3), public models (§4) and the common CUDA base (§6) are confirmed;
-the official participation terms will carry them, and where the two differ the official terms
-apply. The data rules (§5) are still a default. The organizer also decided on 2026-10-10 that
+**Status: confirmed by the organizer on 2026-10-10 (decision D53); your own work is MIT only since
+2026-10-13 (decision D72).** The rules for your own work (§2), third-party components (§3), public
+models (§4) and the common CUDA base (§6) are confirmed, and the participation terms carry them.
+The data rules (§5) are rules too (decision D81, 2026-10-13). The organizer also decided on 2026-10-10 that
 submissions are open source and that teams assert no patent or other intellectual-property rights
-over them (decision D54, §2.1); the clause wording is a draft under the organizer's legal review.
-This page and the licence checker are not legal advice and do not approve a licence: the checker
-only flags components from their declared metadata and the policy's name rules, your team remains
-responsible for everything it ships, and a person at the organizer reviews the flagged items after
-the submission and makes the final judgement (SPEC-14). Nothing is approved in advance and there
-are no exceptions (decision D63).
+over them (decision D54, §2.1). The licence checker flags components from their declared metadata
+and the policy's name rules; HQ decides flagged items after submission (SPEC-14). Nothing is
+approved in advance and there are no exceptions (decision D63).
 
 Why this matters: the organizer runs your Stage 1 bundle, tests and demonstrates your Stage 2 web
 system, keeps both, and hands them over to APCTT for follow-on development (the handover in
@@ -22,12 +19,12 @@ system, keeps both, and hands them over to APCTT for follow-on development (the 
 
 | What | Rule | Where |
 |---|---|---|
-| Your own code, rules and trained weights (Stage 1) | Apache-2.0 or MIT; anything else is refused | `participant_module/LICENSE` and `"license"` in `submission.json` (§2) |
-| Your Stage 2 web code | Apache-2.0 or MIT; anything else is refused | `LICENSE` at the root of the web code, `"license"` in your `package.json` files (§2) |
+| Your own code, rules and trained weights (Stage 1) | MIT; anything else, Apache-2.0 included, is refused (D72) | `participant_module/LICENSE` and `"license"` in `submission.json` (§2) |
+| Your Stage 2 web code | MIT; anything else, Apache-2.0 included, is refused (D72) | `LICENSE` at the root of the web code, `"license"` in your `package.json` files (§2) |
 | Your rights in your work | You keep ownership; you submit it as open source and assert no patent, copyright, trade-secret or other intellectual-property claim over it against the organizer, APCTT or anyone who uses it under that licence (§2.1) | The official participation terms |
 | Third-party packages and front-end libraries | Strong copyleft and use-restricted licences are refused; weak copyleft is reviewed after the submission; MPL-2.0 is allowed (§3). Your Stage 1 zip contains no packages: Python packages come from the common base | `package-lock.json` of your web system, your notices file |
 | Third-party pure-Python code you copy into your package | Allowed, listed with its licence; compiled extensions are refused. If a licence or security problem arises later, your team bears the legal responsibility and the award is revoked (D66, §2.2) | `participant_module/`, `participant_module/THIRD_PARTY_NOTICES.md` |
-| Public models | Only the models of the model catalogue, by `catalog_id`, and weights your team trained (§4) | `"models"` in `submission.json` |
+| Public models | Only the models of the model catalogue, by `catalog_id`, and weights your team trained (§4); weights derived from a catalogue model also keep that model's licence | `"models"` in `submission.json` |
 | Data and documents | Declare the licence or terms of every source (§5) | `data_sources[].license` in your data declaration |
 | PyTorch and NVIDIA CUDA libraries | Part of the common base, installed by the organizer; never shipped by you (§6) | Nowhere in your zip or your web system |
 
@@ -35,30 +32,36 @@ Run [`tools/check_licenses.py`](../../tools/check_licenses.py) before you submit
 
 ## 2. Your own work
 
-License everything your team wrote or trained under **Apache-2.0 or MIT**: the module code, rules,
-prompts, configuration and any weights you trained yourselves. Anything else is refused: another
-licence (a permissive one such as BSD-3-Clause included), Apache-2.0 or MIT with an exception or
-added terms (`MIT WITH Commons-Clause`, `Apache-2.0 WITH LLVM-exception`: these are other
-licences), no declaration, a missing or empty licence file, or a missing or unreadable
-`submission.json`. The checker reads the identifier you
-declare and checks that the licence file is there and not empty; it does not read the text, so
-make sure the file holds the full text of the licence you declared.
+License everything your team wrote or trained under **MIT**: the module code, rules, prompts,
+configuration and any weights you trained yourselves, adapters and fine-tunes included. The
+organizer decided this on 2026-10-13 (decision D72), so that APCTT can use, combine and
+redistribute your work later without a licence problem; until then Apache-2.0 was allowed as well.
+Anything else is refused: another licence (Apache-2.0 and other permissive ones such as
+BSD-3-Clause included), MIT together with another licence (`MIT OR Apache-2.0`), MIT with an
+exception or added terms (`MIT WITH Commons-Clause`: another licence), no declaration, a missing or
+empty licence file, or a missing or unreadable `submission.json`. The checker reads the identifier you
+declare and checks that your licence file (`participant_module/LICENSE`; for Stage 2 the `LICENSE`
+at the root of the web code) holds the MIT text: its permission, condition and warranty
+paragraphs, compared without regard to case, quotes, punctuation and line breaks. Another text
+there, such as the Apache-2.0 text, is refused with a message that says so (D72); the MIT text
+followed by another licence text is a review item. Copy `licenses/MIT.txt` of the kit, put your
+team in the copyright line and save it as UTF-8 text (a file saved as UTF-16 with a byte order
+mark, such as Notepad's "Unicode", is read too).
 
 Stage 1 bundle:
 
 - `participant_module/LICENSE`: the full licence text, with your team or organisation in the
   copyright line. It sits inside your package, so the package hash covers it. Make it a regular
   file: the checker does not follow a symbolic link, so a linked `LICENSE` counts as missing.
-- `submission.json`: `"license": "Apache-2.0"` or `"license": "MIT"`, the same licence as the file.
+- `submission.json`: `"license": "MIT"`, the licence of the file.
 - `participant_module/THIRD_PARTY_NOTICES.md`: every third-party component you ship, with version
   and licence (`--notices` drafts it, §7). Add both files before you compute your final package hash.
 
 Stage 2 web system:
 
-- `LICENSE` (or `LICENSE.md`, `LICENSE.txt`) at the root of the web code, holding the Apache-2.0 or
-  MIT text.
+- `LICENSE` (or `LICENSE.md`, `LICENSE.txt`) at the root of the web code, holding the MIT text.
 - `"license"` in your own `package.json` files, where you set it (the root, sub-projects such as
-  `frontend/package.json`, npm workspaces): `Apache-2.0` or `MIT` (not `UNLICENSED`; leave the
+  `frontend/package.json`, npm workspaces): `MIT` (not `UNLICENSED`; leave the
   field out rather than use another value; a legacy `"licenses"` list counts the same way). A
   folder with its own `package.json` counts as your sub-project when it has `package-lock.json`,
   `node_modules/`, `"private": true`, `"workspaces"` or its own `yarn.lock`, `pnpm-lock.yaml` or
@@ -67,13 +70,13 @@ Stage 2 web system:
 - `THIRD_PARTY_NOTICES.md` at the root, and an About or Licences page in the web system that shows
   it (§3.4).
 
-The licence-related part of `submission.json` (the other fields are announced with the submission
-format):
+The licence-related part of `submission.json` (the other fields are in [SUBMISSION.md](SUBMISSION.md) §1.2
+and `contracts/submission.schema.json`):
 
 <!-- example: submission-licence -->
 ```json
 {
-  "license": "Apache-2.0",
+  "license": "MIT",
   "models": [
     {"catalog_id": "qwen2.5-1.5b-instruct"},
     {
@@ -88,9 +91,9 @@ format):
 
 | Field | What to write |
 |---|---|
-| `license` | `Apache-2.0` or `MIT`: the licence of your own work. |
+| `license` | `MIT`: the licence of your own work (D72). |
 | `models[].catalog_id` | The id of each public model you use, from the model catalogue `contracts/model-catalog.json` (`python tools/get_models.py --list`). Only catalogue models may be used (D64); the organizer provides them, so a catalogue entry has no `path` and their weights are never in your bundle. |
-| `models[].team_trained` | `true` for weights your team trained itself, with `name` and `path`; they are covered by your `license`. A fine-tune or adapter of a catalogue model is your own work too: name its base in `base_model` (a catalogue id). A base model, `repo` or `url` outside the catalogue is refused. The model deny list (§3.3) still applies to a team-trained entry's names, a `license` you declare for it must be Apache-2.0 or MIT (anything else is refused), and a `name` that suggests a model family other than its catalogue `base_model` (Gemma, Llama, EXAONE, Qwen and the others in the policy's `models.name_families`, for example `my-gemma-ft`) goes to review. |
+| `models[].team_trained` | `true` for weights your team trained itself, with `name` and `path`; they are covered by your `license`. A fine-tune or adapter of a catalogue model is your own work too: name its base in `base_model` (a catalogue id); the weights also stay subject to the base model's licence, so keep its `LICENSE` and `NOTICE` files with them (the checker lists this as a condition). A base model, `repo` or `url` outside the catalogue is refused. The model deny list (§3.3) still applies to a team-trained entry's names, a `license` you declare for it must be MIT (anything else is refused), and a `name` that suggests a model family other than its catalogue `base_model` (Gemma, Llama, EXAONE, Qwen and the others in the policy's `models.name_families`, for example `my-gemma-ft`) goes to review. |
 
 Weight files (`*.safetensors`, `*.bin`, `*.gguf`, `*.onnx`, `*.pt`, …) and shared libraries or
 executables (`*.so`, `*.dll`, `*.dylib`, `*.exe`) in `assets/` or `participant_module/` that no
@@ -100,9 +103,8 @@ executables (`*.so`, `*.dll`, `*.dylib`, `*.exe`) in `assets/` or `participant_m
 
 The organizer decided on 2026-10-10 that submissions are open source and that teams assert no
 patent or other intellectual-property rights over them (decision D54). The clause below is the
-wording the organizer's legal adviser will review: a DRAFT, not legal advice. The official
-participation terms carry the final text and prevail over this page. In short: you keep ownership
-of your work; you license it under Apache-2.0 or MIT; you promise not to bring patent, copyright,
+clause of the participation terms. In short: you keep ownership
+of your work; you license it under MIT; you promise not to bring patent, copyright,
 trade-secret or other intellectual-property claims over it, or over its follow-on development,
 against the organizer, APCTT or anyone who uses it under that licence; and you confirm that you
 have the right to submit everything in your submission. Nothing in the clause changes what §2
@@ -110,18 +112,15 @@ asks you to put in your bundle or web code.
 
 > **Open-source submission and non-assertion of intellectual-property rights (decision D54)**
 >
-> DRAFT for the organizer's legal review. Not legal advice. The official participation terms
-> prevail.
->
 > In this clause, "submitted work" means everything the team itself wrote or trained and submits
 > for the hackathon: the Stage 1 bundle (the code, rules, prompts and configuration in
 > `participant_module/`, and the weights the team trained in `assets/`), the Stage 2 web system,
 > and the handover materials that go with them. It does not include third-party components
-> (item 5). "Declared licence" means the Apache License 2.0 or the MIT License, as the team
-> declares it in its submission.
+> (item 5). "Declared licence" means the MIT License, which the team declares in its submission
+> (decision D72).
 >
 > 1. Open source. The team submits the submitted work as open-source software under the declared
->    licence (Apache-2.0 or MIT, decision D53). The declared licence is granted to the organizer,
+>    licence (MIT, decisions D53 and D72). The declared licence is granted to the organizer,
 >    to APCTT and to everyone who receives the submitted work under it.
 > 2. Non-assertion. With respect to the submitted work, including its follow-on development, the
 >    team does not assert, and will not assert, any patent, copyright, trade-secret or other
@@ -131,9 +130,8 @@ asks you to put in your bundle or web code.
 >    members and their successors, and reaches claims that the submitted work, alone or combined
 >    with a modification or follow-on development of it, infringes such a right; it does not
 >    reach a claim that concerns only material that others added, or use outside the declared
->    licence. Where the declared licence already grants a patent licence (Apache-2.0, section 3),
->    the covenant adds to it and does not narrow it; where it does not (MIT), the covenant
->    supplies the patent commitment that the licence text lacks.
+>    licence. The MIT License contains no express patent licence; the covenant supplies the
+>    patent commitment that the licence text lacks.
 > 3. Warranty of rights. The team warrants that it has the right to submit everything in its
 >    submission under the declared licence: the submitted work is the team's own; every team
 >    member, and every employer, university or other organisation whose consent is needed, has
@@ -149,25 +147,20 @@ asks you to put in your bundle or web code.
 >    this covenant do not cover them, and the team's warranty for them is limited to the right to
 >    include them as shipped (item 3).
 
-What the two licences already provide, and what the clause adds:
+What the MIT licence already provides, and what the clause adds:
 
-- Apache-2.0 contains an express patent licence. Its section 3 grants every recipient a
-  perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable licence under the
-  patent claims licensable by the contributor that are necessarily infringed by the contribution
-  alone or combined with the work, and that patent licence terminates for a recipient who files
-  patent litigation alleging that the work infringes a patent (termination on suit). For an
-  Apache-2.0 submission, item 2 does not narrow the section 3 patent licence; it adds a covenant
-  that also covers copyright, trade-secret and other claims and reaches follow-on development.
 - MIT contains no express patent grant. It is a copyright permission ("to deal in the Software
   without restriction, including ... to use, copy, modify, merge, publish, distribute, sublicense,
-  and/or sell copies"), and whether that wording implies a patent licence is unsettled. For an
-  MIT submission, item 2 closes that gap: it is the team's patent commitment.
-- Neither licence mentions trade secrets, and both disclaim every warranty, including
-  non-infringement and title (Apache-2.0 section 7; the "AS IS" paragraph of MIT). Item 3 is
-  therefore a warranty the licences themselves do not give; it is given to the organizer and
-  APCTT under the participation terms.
-- Items 4 and 5 restate what both licences already imply: each is a non-exclusive licence, not an
-  assignment, and each covers only the licensor's own work.
+  and/or sell copies"), and whether that wording implies a patent licence is unsettled. Item 2
+  closes that gap: it is the team's patent commitment, and it also covers copyright, trade-secret
+  and other claims and reaches follow-on development. (Apache-2.0, which teams could choose until
+  decision D72, has an express patent licence in its section 3; with MIT only, item 2 is the
+  team's whole patent commitment.)
+- MIT does not mention trade secrets, and it disclaims every warranty, including non-infringement
+  and title (its "AS IS" paragraph). Item 3 is therefore a warranty the licence itself does not
+  give; it is given to the organizer and APCTT under the participation terms.
+- Items 4 and 5 restate what the licence already implies: it is a non-exclusive licence, not an
+  assignment, and it covers only the licensor's own work.
 
 ### 2.2 Third-party pure-Python code in your package (D66)
 
@@ -179,9 +172,8 @@ and binaries (`.so`, `.pyd`, `.dylib`, `.dll`, `.exe`), wheels, virtual environm
 `site-packages`, installed package metadata (`*.dist-info`) and copies of packages of the common
 base are refused. **If a licence problem or a security problem with code you included arises
 later, your team bears the legal responsibility and the award is revoked.** The checks of this kit
-flag components from their declared metadata only; passing them does not mean the code is free of
-licence or security problems. `tools/make_submission.py` prints this as a one-line reminder every
-time it packs or checks your zip.
+flag components from their declared metadata. `tools/make_submission.py` prints this rule as a
+one-line reminder every time it packs or checks your zip.
 
 ## 3. Third-party components
 
@@ -191,7 +183,7 @@ time it packs or checks your zip.
 |---|---|
 | Allowed | MIT, MIT-0, MIT-CMU, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, PSF-2.0, Python-2.0, CNRI-Python (used by `regex`, a `transformers` dependency), Zlib, 0BSD, Unlicense, CC0-1.0, BSL-1.0, HPND, CDLA-Permissive-2.0, BlueOak-1.0.0, and the classifiers "BSD License" and "Apache Software License" that name no version (keep the package's licence file) |
 | Allowed with conditions | MPL-2.0 (weak, file-level copyleft: ship the MPL-covered files with the licence text and say where their source is; your changes to those files stay MPL-2.0); OFL-1.1 (fonts only; ship the OFL text with the fonts); CC-BY-4.0 and CC-BY-3.0 (icons, images, documents and data only; keep the attribution) |
-| Review: the organizer decides after the submission | Weak copyleft: LGPL (every version), EPL, CDDL, MPL-1.0 and MPL-1.1, CeCILL; CC-BY-SA; CC-BY-ND (it forbids modified versions); Artistic; BSD-4-Clause; Elastic-2.0 (it bars offering the software to others as a hosted or managed service; whether that counts as a use restriction of rule 3 is a question for the organizer); proprietary, public-domain and custom licences (`LicenseRef-…`); any identifier that is not in these lists; an unrecognised licence string (§3.2); no licence declared |
+| Review: the organizer decides after the submission | Weak copyleft: LGPL (every version), EPL, CDDL, MPL-1.0 and MPL-1.1, CeCILL; CC-BY-SA; CC-BY-ND (it forbids modified versions); Artistic; BSD-4-Clause; Elastic-2.0 (it bars offering the software to others as a hosted or managed service; it stays review, decided by HQ after the submission, decision D81); proprietary, public-domain and custom licences (`LicenseRef-…`); any identifier that is not in these lists; an unrecognised licence string (§3.2); no licence declared |
 | Denied (no exceptions, D63) | Strong copyleft: AGPL, GPL (every version, `-only` or `-or-later`), SSPL, EUPL, OSL, RPL, and dual "GPL or commercial" licences that offer no permissive alternative. Use-restricted: non-commercial (CC-BY-NC…, PolyForm Noncommercial), research- or evaluation-only, revenue- or funding-capped (OpenRAIL-M variants with revenue caps, PolyForm Small Business), production-use restricted (BUSL), commercial-only licences and SDKs, Commons Clause. Gated custom model licences (Llama, Gemma) |
 
 How expressions count:
@@ -209,8 +201,8 @@ How expressions count:
   an alternative licence). `GCC-exception-3.1` (the GCC runtime library exception) and
   `Font-exception-2.0` (a font exception, such as the Liberation fonts in `pdfjs-dist`, §3.4) make
   a GPL-2.0 or GPL-3.0 licence allowed with their condition, and `Classpath-exception-2.0` makes
-  GPL-2.0 review. These GPL carve-outs were added by the kit builder and await the organizer's
-  explicit confirmation; on any other licence they change nothing except that the result is at
+  GPL-2.0 review. These GPL carve-outs were added by the kit builder and are rules since
+  decision D81; on any other licence they change nothing except that the result is at
   least review, so `AGPL-3.0-only WITH GCC-exception-3.1` stays refused. Any other exception makes
   the result at least review. Your own licence (§2) takes no exception at all.
 - `+` and `-or-later` stay in the same family: `GPL-2.0+` is GPL (refused), `LGPL-2.1+` is LGPL
@@ -242,7 +234,8 @@ read as an `OR`) and "LGPLv2.1+". Anything else is review with the reason "unrec
 string": for example `pypdfium2`'s "BSD-3-Clause, Apache-2.0, dependency licenses", npm's "SEE
 LICENSE IN LICENSE.md", or a whole licence text pasted into the `License` field.
 
-The checker **does not read licence files or file contents**. Words in a package's LICENSE or
+The checker **does not read licence files or file contents**, except your own licence file, which
+must hold the MIT text (§2). Words in a package's LICENSE or
 NOTICE files (a bundled non-commercial component, a Commons Clause, extra terms) do not change its
 result, and npm licence files are not read either: npm packages are judged by their declared
 licence and the name rules below. Packages whose metadata looks permissive but whose terms are not
@@ -250,9 +243,8 @@ are caught by **name rules** in the policy (exact names, npm scopes such as `@ck
 version rules such as `apexcharts` 5.0.0 and later). It does not check fonts, images, icons, code
 you copied into your own files, or the contents of copied front-end files (§3.4, §7).
 
-So a result of "allowed" means the declared metadata and the name rules raise no flag, not that
-the licence has been approved. Read the licence files of what you ship; your team remains
-responsible for it, and the organizer reviews every flagged item.
+So a result of "allowed" means the declared metadata and the name rules raise no flag. Read the
+licence files of what you ship; HQ decides flagged items after submission.
 
 ### 3.3 Common components that are denied, and permissive alternatives
 
@@ -286,13 +278,18 @@ base instead (for example `rapidocr-onnxruntime` for OCR and `pypdfium2` for ren
 
 ### 3.4 Web systems (Stage 2)
 
+- **Node.js is available on the event computers** (decision D81), so a Node.js-based front-end
+  build may run on site. The event computers have no network, so nothing can be downloaded during
+  the event: bring every dependency as files (vendored in your web directory, for example
+  `node_modules/` with `package.json` and `package-lock.json`) and check them with
+  `tools/check_licenses.py --web`.
 - Everything the browser downloads (JavaScript, CSS, fonts, icons, images) is distributed to every
   user. Because the demonstration runs without network access, you bundle these files with your web
   code; ship each one's licence file with it.
 - Minified bundles lose licence comments easily. Use your bundler's option or plugin that collects
   them into a third-party licence file, and serve that file.
-- Upload your front-end sources with `package.json` and `package-lock.json`, not only the build
-  output: the checker judges npm packages by the licence declared in the lock (or in
+- Keep your front-end sources with `package.json` and `package-lock.json` in your web directory,
+  not only the build output: the checker judges npm packages by the licence declared in the lock (or in
   `node_modules/`) and by the name rules. Packages only in `devDependencies` (or marked
   `"dev": true` in the lock) are listed in a note, not counted, because they are not shipped to
   browsers; make sure your build does not bundle them. Dev-only packages that are not allowed
@@ -307,7 +304,7 @@ base instead (for example `rapidocr-onnxruntime` for OCR and `pypdfium2` for ren
   licence file in the same folder and list it by hand in `THIRD_PARTY_NOTICES.md`. The checker
   reports one review item per folder of copied files: folders with minified files (`*.min.js`,
   `*.min.css`) and, outside an npm project, folders named like `vendor/`, `lib/` or
-  `third_party/` and build output (`dist/`, `build/` …) uploaded without `package.json`. Your own
+  `third_party/` and build output (`dist/`, `build/` …) without `package.json`. Your own
   sources and the build output of an npm project are not listed. A copied folder that keeps its
   own `package.json` and is installed by no lock is read as a third-party package: its declared
   licence and the name rules, plus each runtime dependency it declares that is not listed yet
@@ -317,7 +314,7 @@ base instead (for example `rapidocr-onnxruntime` for OCR and `pypdfium2` for ren
   folder whose `package.json` declares no `dependencies` or `devDependencies` (only
   `optionalDependencies` or `peerDependencies`, as `pdfjs-dist` 6.4.299 does). Otherwise a folder
   whose `package.json` declares dependencies is your sub-project (§2), and its licence must be
-  Apache-2.0 or MIT: put a copied package with a licence such as ISC or BSD under `vendor/` so that
+  MIT: put a copied package with a licence such as ISC, BSD or Apache-2.0 under `vendor/` so that
   it is read as a third-party package. The name rules also apply to the `package.json` of every
   folder that is read as a project.
 - `pdfjs-dist` (Apache-2.0), the usual viewer for showing the evidence page of the original PDF,
@@ -347,8 +344,9 @@ Download the same files for development with `python tools/get_models.py ID --st
 (`--list` shows the catalogue with sizes, VRAM estimates and CPU feasibility). Every catalogue model
 is Apache-2.0 or MIT, and the tool adds the licence text to a copy whose repository has none. Any
 other public model is refused, whatever its licence, and public model weights are never shipped in
-`assets/`; there are no exceptions (D63). A fine-tune keeps the licence terms of its catalogue base
-model for the parts that come from it.
+`assets/`; there are no exceptions (D63). A fine-tune or adapter is your own work under MIT (D72)
+and keeps the licence terms of its catalogue base model for the parts that come from it: keep the
+base model's `LICENSE` and `NOTICE` files with your weights.
 
 ## 5. Data and documents
 
@@ -360,7 +358,7 @@ model for the parts that come from it.
   if you used no data; a missing `declaration.json` goes to review.
 - Data under non-commercial or research-only terms (for example `CC-BY-NC-4.0`) is refused (no
   exceptions, D63); share-alike terms (CC-BY-SA) and terms the checker does not recognise
-  go to review. These data rules are a default that the organizer has not yet confirmed.
+  go to review. These data rules are rules (decision D81).
 - PDFs you show in a Stage 2 demonstration must be ones you may show: the organizer's samples, or
   documents in the public domain or under a licence that allows it (see §9).
 
@@ -424,8 +422,8 @@ against the components' own licence files, then save it as `participant_module/T
 in your module before you compute the package hash. `--policy` selects another policy
 file (default: `contracts/license-policy.json`).
 
-What `--bundle` reads: `submission.json` (`"license"`, `"models"`), whether
-`participant_module/LICENSE` is present, `declaration.json` (`data_sources[].license`), weight and
+What `--bundle` reads: `submission.json` (`"license"`, `"models"`), the text of
+`participant_module/LICENSE` (it must hold the MIT text, §2), `declaration.json` (`data_sources[].license`), weight and
 library files in `assets/` and `participant_module/`, and every Python package it finds: every
 `*.whl` file and every installed or vendored package, read from its `.dist-info/METADATA`,
 `.egg-info/PKG-INFO` or the `PKG-INFO` of an unpacked source package. The minimal bundle contains
@@ -450,21 +448,22 @@ included, but not `node_modules/` below a project, virtual environments or `.git
   `package-lock.json` (`npm install --package-lock-only`) to each project.
 - Python: your web system runs in the common base environment and uses only its packages
   (fastapi, uvicorn, jinja2, python-multipart, httpx, pydantic), so it needs no Python dependency
-  files. If the upload has `requirements*.txt` or `requirements*.lock` files, every line is read (a
+  files. If the web directory has `requirements*.txt` or `requirements*.lock` files, every line is read (a
   requirement that is not pinned with `==` is review: "not pinned"; a package without a wheel is
   review, because its licence is not read), and so is every wheel and every installed package in
-  the upload (a `.venv`, `site-packages`, a `.dist-info` folder), because the whole web directory is
-  delivered; keep your development environment outside it. `pyproject.toml`, `uv.lock`,
+  the web directory (a `.venv`, `site-packages`, a `.dist-info` folder), because the whole web directory is
+  checked; keep your development environment outside it. `pyproject.toml`, `uv.lock`,
   `poetry.lock`, `Pipfile`, `Pipfile.lock`, `setup.py`, `setup.cfg` and `environment.yml` are not
   read: each is review unless a `requirements*.txt` sits next to it. Leave these files out of the
-  upload: the web code needs no Python dependency files. A Python package of the upload that is not
+  web directory: the web code needs no Python dependency files. A Python package of the web directory that is not
   in the common base (`contracts/base-environment.json`) is review, because the web system runs in
   the common base with its packages only (D64).
-- Your `LICENSE` at the root, the `"license"` of your own `package.json` files, and folders of
-  copied or minified front-end files (§3.4), including build output (`dist/`, `build/` …) that is
-  uploaded without `package.json`.
+- Your `LICENSE` at the root (it must hold the MIT text, §2), the `"license"` of your own
+  `package.json` files, and folders of
+  copied or minified front-end files (§3.4), including build output (`dist/`, `build/` …) that has
+  no `package.json`.
 
-What it cannot see: licence files and the contents of files (JavaScript, CSS, images, icons,
+What it cannot see: licence files other than your own and the contents of files (JavaScript, CSS, images, icons,
 fonts), code pasted into your own files, and libraries copied as plain source files without
 package metadata: list them by hand, with version and licence, in `THIRD_PARTY_NOTICES.md`. Exit
 code 0 means that the declared metadata of everything the checker found raises no flag, not that
@@ -485,7 +484,7 @@ not failures: the organizer decides them after the submission, and there are no 
 
 ## 8. Checklist
 
-- [ ] `participant_module/LICENSE` (Apache-2.0 or MIT) and the same `"license"` in `submission.json`.
+- [ ] `participant_module/LICENSE` with the MIT text and `"license": "MIT"` in `submission.json` (D72).
 - [ ] Every catalogue model you use listed under `"models"` by `catalog_id` (no weights of it in
       your zip); your own trained weights listed with `"team_trained": true` and `path`, and
       `base_model` (a catalogue id) for a fine-tune or adapter.
@@ -500,28 +499,31 @@ not failures: the organizer decides them after the submission, and there are no 
 - [ ] Stage 2: `LICENSE` and `THIRD_PARTY_NOTICES.md` at the root of the web code, the front-end
       sources with `package.json` and `package-lock.json` (not only the build output), licence
       files next to bundled fonts and assets (all of `pdfjs-dist`'s), Python code that uses only
-      packages of the common base (no virtual environment in the upload), copied front-end files
+      packages of the common base (no virtual environment in the web directory), copied front-end files
       listed by hand, and an About or Licences page.
 - [ ] `tools/make_submission.py` (which runs `tools/check_licenses.py --bundle`) ends with `VALID`,
       or with `VALID_WITH_REVIEW` and you have explained each review item; `--web` on the web
       system exits with 0, or with 2 and you have explained each review item.
 
-## 9. Not legal advice: points under the organizer's legal review
+## 9. Participation terms
 
-These points are open with the organizer's legal adviser. Nothing on this page settles them, and
-the official participation terms will state the outcome.
+The participation terms state these points; the organizer settled the last open questions on
+2026-10-13 (decision D81).
 
-- The participation terms: the rights your team grants the organizer and APCTT (running,
-  evaluation, demonstration, keeping, handover and follow-on development), the licence rule of §2,
-  and your assurance that you have the right to everything you submit.
-- The non-assertion clause of §2.1 (D54): how far it reaches (follow-on development, method
-  patents, rights held by a member's employer or university), how it sits with the warranty
-  disclaimers of Apache-2.0 and MIT, whether it covers training data and training code that you
-  hand over but that are not in the bundle, and whether it should mirror Apache-2.0's
-  termination on suit.
-- NVIDIA's CUDA licence agreement lets the licensee's employees and contractors use the software
-  on its secure network; whether a team member operating an organizer machine during a Stage 2
-  demonstration fits that wording is under review.
-- Who may accept the licences of §6 and of the participation terms (age of majority, authority to
-  act for an organisation) and U.S. export rules for participants.
-- The rights in the PDFs used for demonstrations and evaluation.
+- Rights: your team grants the organizer and APCTT the rights to run, evaluate, demonstrate, keep,
+  hand over and further develop your submission; your work is under the licence rule of §2; and
+  you assure that you have the right to everything you submit.
+- The non-assertion clause of §2.1 (D54) applies as written there. Your assurance of rights is
+  given to the organizer and APCTT and is separate from the warranty disclaimer of the MIT
+  licence.
+- The common CUDA base is installed by the organizer on its own machines and is not
+  redistributed; on the event computers you use it as installed. If you install the NVIDIA
+  packages yourself for development, you accept their terms, U.S. export rules included (§6).
+- Each member who signs the registration confirms that he or she is of age and authorised to
+  bind the team, or that a parent, guardian or authorised representative has signed.
+- PDFs you show in a Stage 2 demonstration must be ones you may show (§5).
+- Revocation under D66 (§2.2) follows the procedure of PROBLEM_DESCRIPTION.md §16: written notice
+  with the reason and the evidence, 48 hours to respond, and a decision by a panel of at least
+  three organizer members without a conflict of interest.
+- Any question that the terms do not answer is decided by APCTT, which publishes the answer to
+  every team (decision D81).

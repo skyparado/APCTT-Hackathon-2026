@@ -2,7 +2,9 @@
 
 A criterion is `met` when one of its configured phrases appears on a PDF page; the evidence points
 to that document and page and quotes the matched text. Otherwise it is `insufficient evidence` with
-an explanation. These are format demonstrations, not assessment rules. Text is read with pypdf.
+an explanation (a criterion with no configured phrase is not looked for). The rules work with any
+checklist; the kit's configurations run the official one (decision D74). These are format
+demonstrations, not assessment rules. Text is read with pypdf.
 """
 
 from __future__ import annotations
@@ -49,7 +51,10 @@ def evaluate(
             if len(found) >= MAX_EVIDENCE:
                 break
         evidence[cid] = found
-        if found:
+        if not phrases[cid]:
+            status[cid] = "insufficient evidence"
+            missing[cid] = "DEMO rule: no phrase is configured for this criterion."
+        elif found:
             status[cid] = "met"
             first = found[0]
             rationale[cid] = (

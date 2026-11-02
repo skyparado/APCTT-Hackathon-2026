@@ -38,7 +38,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 200,
-      "description": "Apache-2.0 or MIT, the same licence as participant_module/LICENSE"
+      "description": "MIT (decision D72), the same licence as participant_module/LICENSE"
     },
     "compute": {
       "type": "object",

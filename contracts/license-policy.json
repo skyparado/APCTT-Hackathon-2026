@@ -1,25 +1,25 @@
 {
   "policy_version": "apctt-license-policy-v2",
-  "version": "0.3.0",
-  "status": "confirmed by the organizer on 2026-10-10 (decision D53); model rule from decision D64 and no exceptions or advance rulings from decision D63 (2026-10-10)",
-  "updated": "2026-10-10",
-  "notice": "Screening aid for Stage 1 bundles and Stage 2 web systems. Not legal advice and not a licence approval. tools/check_licenses.py flags components from their declared licence metadata and from the name rules in this file; it does not read licence texts or file contents. The team remains responsible for everything it ships; a person at the organizer reviews the flagged items and makes the final judgement (SPEC-14).",
-  "to_confirm": [
-    "datasets rules",
-    "the GPL carve-outs GCC-exception-3.1 and Font-exception-2.0 (allowed only on a GPL-2.0/GPL-3.0 base) and Classpath-exception-2.0 (review instead of denied on a GPL-2.0 base): a builder addition to D53 rule 2, not part of the organizer's confirmation (LICENSE_POLICY.md §4-6)",
-    "licences the confirmed rules do not name are review, not denied: Elastic-2.0 (it bars offering the software to others as a hosted or managed service: a use restriction under rule 3?) and strong copyleft outside the named families (CeCILL-2.1, Sleepycat, GFDL, NGPL); the organizer may deny them (LICENSE_POLICY.md §4-9)"
+  "version": "0.4.0",
+  "status": "confirmed by the organizer on 2026-10-10 (decision D53); model rule from decision D64 and no exceptions or advance rulings from decision D63 (2026-10-10); team licence MIT only from decision D72 (2026-10-13)",
+  "updated": "2026-10-13",
+  "notice": "Licence policy for Stage 1 bundles and Stage 2 web systems. tools/check_licenses.py flags components from their declared licence metadata and from the name rules in this file; it does not read licence texts or file contents, except the team's own licence file, which must hold the MIT text (D72). HQ decides flagged items after submission (SPEC-14).",
+  "settled": [
+    "data rules: a licence declaration per data source, read with the general lists (non-commercial and research-only refused, share-alike and unrecognised terms review); a rule since decision D81",
+    "the GPL carve-outs GCC-exception-3.1 and Font-exception-2.0 (allowed only on a GPL-2.0/GPL-3.0 base) and Classpath-exception-2.0 (review instead of denied on a GPL-2.0 base): a builder addition to D53 rule 2, adopted as rules by decision D81 (LICENSE_POLICY.md §4-6)",
+    "licences the confirmed rules do not name are review, not denied: Elastic-2.0 (it bars offering the software to others as a hosted or managed service) and strong copyleft outside the named families (CeCILL-2.1, Sleepycat, GFDL, NGPL); HQ decides them after the submission (decision D81, LICENSE_POLICY.md §4-9)"
   ],
   "statuses": {
     "allowed": "May be used and shipped; keep the licence and notice files that come with it.",
-    "review": "A person at the organizer decides after the submission (exit code 2 if nothing is denied); there are no advance rulings (D63).",
+    "review": "HQ decides after the submission (exit code 2 if nothing is denied); there are no advance rulings (D63).",
     "denied": "Must not be used or shipped (exit code 1); there are no exceptions (D63). Packages of the organizer's common CUDA base (D52) are denied in a team bundle."
   },
   "team_license": {
-    "allowed": ["Apache-2.0", "MIT"],
-    "bundle": "submission.json \"license\" is Apache-2.0 or MIT, and participant_module/LICENSE holds that licence text.",
-    "web": "A LICENSE file at the root of the web code holds the licence text, and every \"license\" in the team's own package.json files (root, sub-projects, workspaces), where present, is Apache-2.0 or MIT.",
+    "allowed": ["MIT"],
+    "bundle": "submission.json \"license\" is MIT, and participant_module/LICENSE holds the MIT licence text.",
+    "web": "A LICENSE file at the root of the web code holds the MIT licence text, and every \"license\" in the team's own package.json files (root, sub-projects, workspaces), where present, is MIT.",
     "web_license_files": ["LICENSE", "LICENSE.md", "LICENSE.txt", "LICENCE", "LICENCE.md", "LICENCE.txt"],
-    "rule": "Confirmed D53 rule 1 (2026-10-10): anything else is denied, as is a missing or unreadable submission.json, a missing declaration and a missing or empty licence file. Only the plain identifiers count (Apache-2.0, MIT, or both joined by OR or AND); an exception or added terms (MIT WITH Commons-Clause, Apache-2.0 WITH LLVM-exception) make another licence and are denied. The same applies to a licence declared for team-trained weights. The checker reads the declared identifier and checks that the licence file is present and not empty; it does not read the licence text."
+    "rule": "Decision D72 (2026-10-13), superseding D53 rule 1 of 2026-10-10, which also allowed Apache-2.0: the team's own work (Stage 1 code, rules and trained weights, adapters and fine-tunes included; Stage 2 web code) is licensed under MIT only, so that APCTT can use, combine and redistribute it later without a licence problem; Apache-2.0 is no longer accepted for the team's own work, and the participation terms' non-assertion covenant (D54) covers MIT's lack of an express patent licence. Anything else is denied, as is a missing or unreadable submission.json, a missing declaration and a missing or empty licence file. Only the plain identifier MIT counts; another identifier joined by OR or AND, an exception or added terms (MIT WITH Commons-Clause) make another licence and are denied. The same applies to a licence declared for team-trained weights. Third-party components and catalogue models keep their own licences (Apache-2.0 and MIT dependencies and models stay allowed, D53 and D64), and weights derived from a catalogue model stay subject to that model's licence as well: keep its LICENSE and NOTICE files with them. The checker reads the declared identifier and checks that the team's licence file holds the MIT text: its permission, condition and warranty paragraphs, compared after case, quotes, punctuation and white space are normalised; the Apache-2.0 text there is denied with a message that says so, and the MIT text together with the Apache-2.0 text is review."
   },
   "licenses": {
     "allow": [
@@ -103,9 +103,9 @@
     },
     "exceptions": {
       "LLVM-exception": {"status": "keep", "note": ""},
-      "GCC-exception-3.1": {"status": "allowed", "bases": ["GPL-2.0*", "GPL-3.0*"], "builder_addition": true, "note": "GCC Runtime Library Exception: covers GCC runtime libraries (libgcc, libstdc++, libgomp) inside compiled packages; keep their licence and notice files."},
-      "Font-exception-2.0": {"status": "allowed", "bases": ["GPL-2.0*", "GPL-3.0*"], "builder_addition": true, "note": "Font exception (for example the Liberation fonts in pdfjs-dist standard_fonts/, GPL-2.0 with Red Hat's font exception): ship the fonts unmodified with their licence file; do not modify or subset them."},
-      "Classpath-exception-2.0": {"status": "review", "bases": ["GPL-2.0*"], "note": "", "builder_addition": true},
+      "GCC-exception-3.1": {"status": "allowed", "bases": ["GPL-2.0*", "GPL-3.0*"], "decision": "D81", "note": "GCC Runtime Library Exception: covers GCC runtime libraries (libgcc, libstdc++, libgomp) inside compiled packages; keep their licence and notice files."},
+      "Font-exception-2.0": {"status": "allowed", "bases": ["GPL-2.0*", "GPL-3.0*"], "decision": "D81", "note": "Font exception (for example the Liberation fonts in pdfjs-dist standard_fonts/, GPL-2.0 with Red Hat's font exception): ship the fonts unmodified with their licence file; do not modify or subset them."},
+      "Classpath-exception-2.0": {"status": "review", "bases": ["GPL-2.0*"], "note": "", "decision": "D81"},
       "Commons-Clause": {"status": "denied", "note": ""}
     },
     "rules": {
@@ -114,7 +114,7 @@
       "restrictions": "An identifier in restrictions (Commons Clause) adds a use restriction, it is not a licence: an expression that names one as a plain identifier anywhere is denied, also as an OR alternative (MIT OR Commons-Clause, Apache-2.0 AND Commons-Clause). As an exception (WITH Commons-Clause) it is denied by exceptions.",
       "OR": "The most permissive allowed alternative counts (the licensee may choose). A paid or proprietary alternative (paid_alternatives, or a LicenseRef matching paid_alternative_patterns such as LicenseRef-Artifex-Commercial) is not a licence offered to everyone and never counts as a choice, so AGPL-3.0-only OR LicenseRef-Commercial is denied.",
       "AND": "The most restrictive part counts.",
-      "WITH": "Only the exceptions listed in exceptions change the result: keep (the licence's own status), denied, or allowed and review, which apply only to the licences in the exception's bases (GPL-2.0 and GPL-3.0, -only, -or-later or +). The allowed and review GPL exceptions (builder_addition) are a builder addition awaiting the organizer (to_confirm). On any other licence an allowed or review exception changes nothing except that the result is at least review, so a denied licence stays denied (AGPL-3.0-only WITH GCC-exception-3.1 is denied). Any other exception makes the result at least review. The team's own licence (team_license) takes no exception at all.",
+      "WITH": "Only the exceptions listed in exceptions change the result: keep (the licence's own status), denied, or allowed and review, which apply only to the licences in the exception's bases (GPL-2.0 and GPL-3.0, -only, -or-later or +). The allowed and review GPL exceptions were a builder addition, adopted as rules by decision D81 (settled). On any other licence an allowed or review exception changes nothing except that the result is at least review, so a denied licence stays denied (AGPL-3.0-only WITH GCC-exception-3.1 is denied). Any other exception makes the result at least review. The team's own licence (team_license) takes no exception at all.",
       "classifiers": "Several License classifiers are read as alternatives; when they have different statuses and none of them is denied in that reading, the result is review, because classifiers do not say whether they are alternatives or parts.",
       "unknown": "review",
       "missing": "review"
@@ -643,7 +643,7 @@
     "license_file_names": ["LICENSE*", "LICENCE*", "COPYING*"],
     "weight_suffixes": [".safetensors", ".bin", ".gguf", ".onnx", ".pt", ".pth", ".ckpt", ".h5", ".keras", ".tflite", ".pb", ".joblib", ".pkl"],
     "catalog": "contracts/model-catalog.json",
-    "rule": "Decision D64 (2026-10-10), replacing the D53 allowlist: the public models a team may use are exactly those of the model catalogue (catalog), named in submission.json by catalog_id; the organizer provides them offline in the read-only model store (APCTT_MODEL_STORE), and a model given by repo is that catalogue model only at the catalogue's revision. Any other public model is refused (denied), whatever its licence, because it is not available offline and public weights are not shipped; a catalogue model shipped in the bundle (path) is refused too. The deny list below still names well-known refusals. An entry with \"team_trained\": true and a path is the team's own weights, covered by the team licence: fine-tunes and adapters of a catalogue model name it in base_model (a catalogue id); a base_model, repo or url that is not a catalogue model is refused; the deny list applies to its names; a declared licence other than Apache-2.0 or MIT is denied (D53 rule 1); and a name that suggests a model family (name_families, e.g. my-gemma-ft) other than its declared catalogue base_model is review. Weight files and shared libraries in assets/ and participant_module/ that no entry covers are review. No exceptions (D63).",
+    "rule": "Decision D64 (2026-10-10), replacing the D53 allowlist: the public models a team may use are exactly those of the model catalogue (catalog), named in submission.json by catalog_id; the organizer provides them offline in the read-only model store (APCTT_MODEL_STORE), and a model given by repo is that catalogue model only at the catalogue's revision. Any other public model is refused (denied), whatever its licence, because it is not available offline and public weights are not shipped; a catalogue model shipped in the bundle (path) is refused too. The deny list below still names well-known refusals. An entry with \"team_trained\": true and a path is the team's own weights, covered by the team licence: fine-tunes and adapters of a catalogue model name it in base_model (a catalogue id); a base_model, repo or url that is not a catalogue model is refused; the deny list applies to its names; a declared licence other than MIT is denied (the team licence, D72); the weights stay subject to the licence of the catalogue model they derive from (keep its LICENSE and NOTICE); and a name that suggests a model family (name_families, e.g. my-gemma-ft) other than its declared catalogue base_model is review. Weight files and shared libraries in assets/ and participant_module/ that no entry covers are review. No exceptions (D63).",
     "name_families": [
       {"pattern": "*gemma*", "family": "Gemma"},
       {"pattern": "*llama*", "family": "Llama"},
@@ -677,7 +677,7 @@
     ]
   },
   "datasets": {
-    "note": "Teams declare the licence or terms of every data source (declaration.json data_sources[].license), read like any other declared licence string: allowed licences pass; non-commercial, research-only and other denied terms are denied (D63: no exceptions); share-alike (CC-BY-SA), weak copyleft and unrecognised terms are review. to_confirm."
+    "note": "Teams declare the licence or terms of every data source (declaration.json data_sources[].license), read like any other declared licence string: allowed licences pass; non-commercial, research-only and other denied terms are denied (D63: no exceptions); share-alike (CC-BY-SA), weak copyleft and unrecognised terms are review. A rule since decision D81 (settled)."
   },
   "web": {
     "notices_file_names": ["THIRD_PARTY_NOTICES*", "NOTICE*", "LICENSES*"],

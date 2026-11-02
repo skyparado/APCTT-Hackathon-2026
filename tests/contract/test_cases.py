@@ -35,6 +35,7 @@ LIMITS = CaseLimits(max_documents=20, max_document_bytes=20 * 1024 * 1024)
 VERSIONS = ProfileVersions(
     schema_version=DEV_SCHEMA_VERSION, checklist_version=DEMO_CHECKLIST_VERSION
 )
+OFFICIAL_CHECKLIST_VERSION = "APCTT-2026-CHECKLIST-v1"
 
 
 def check(body: Any, limits: CaseLimits = LIMITS) -> tuple[str | None, list[tuple[str, str]]]:
@@ -49,8 +50,13 @@ def body(**case_changes: Any) -> dict[str, Any]:
 
 
 def test_ac04_case_and_evidence_ids() -> None:
+    # The example request is for the official checklist of config/dev.json (D74).
     example = load_json("docs/EXAMPLE_REQUEST.json")
-    assert check(example) == (None, [])
+    official = ProfileVersions(
+        schema_version=DEV_SCHEMA_VERSION, checklist_version=OFFICIAL_CHECKLIST_VERSION
+    )
+    assert check_request(example, limits=LIMITS, versions=official).code is None
+    assert check(example)[0] == "VERSION_MISMATCH"
     assert check(body()) == (None, [])
 
     # Unique document IDs.
@@ -296,15 +302,51 @@ def test_ac25_response_ipc_compute_contract() -> None:
     assert stored == worker_protocol_schema()
     loaded = load_config(ROOT / "config/dev.json", profile="dev")
     assert loaded.config.compute.device == "cpu" and not loaded.config.compute.require_cuda
-    assert loaded.checklist.version == DEMO_CHECKLIST_VERSION
-    assert loaded.config.limits.max_request_bytes == 67_108_864  # PDFs as base64
-    assert loaded.config.limits.max_document_bytes == 20_971_520
-    assert loaded.config.limits.max_total_pages == 2_000
+    assert loaded.checklist.version == OFFICIAL_CHECKLIST_VERSION  # D74: the official default
+    assert loaded.checklist.official
+    assert loaded.config.limits.max_request_bytes == 83_886_080  # 80 MiB: PDFs as base64
+    assert loaded.config.limits.max_documents == 3
+    assert loaded.config.limits.max_document_bytes == 52_428_800  # 50 MiB
+    assert loaded.config.limits.max_total_pages == 300
     assert len(loaded.config_sha256) == 64
     demo = Checklist.model_validate(load_json("contracts/checklist.demo.json"))
     assert demo.version == DEMO_CHECKLIST_VERSION and demo.official is False
     with pytest.raises(ValidationError):
         Checklist.model_validate(dict(CHECKLIST, criteria=CHECKLIST["criteria"] * 2))
+
+
+# The official input limits (decision D77, 2026-10-13), the same in every configuration the kit
+# and the organizer's templates hold; the 3-minute limit per case (D41) is unchanged.
+OFFICIAL_LIMITS = {
+    "max_documents": 3,
+    "max_document_bytes": 50 * 1024 * 1024,
+    "max_request_bytes": 80 * 1024 * 1024,
+    "max_total_pages": 300,
+    "deadline_ms": 180_000,
+}
+
+
+def test_official_input_limits_in_every_configuration() -> None:
+    """Not a required node: D77 limits in the dev and CUDA example configurations and in both
+    HQ templates. base64 makes a request about 4/3 of its PDFs, so the request limit caps the PDFs
+    of one case at about 59 MiB together, more than the largest public sample PDF (49.3 MiB). The
+    participant kit ships config/dev.json, the CUDA variant also config/cuda-example.json, and
+    neither ships the HQ templates: in a kit, the files it does not ship are not read."""
+    repository = (ROOT / "tools/hq").is_dir()
+    for relative in (
+        "config/dev.json",
+        "config/cuda-example.json",
+        "tools/hq/templates/server-config.dev.json",
+        "tools/hq/templates/server-config.evaluation.json",
+    ):
+        if not repository and relative != "config/dev.json" and not (ROOT / relative).exists():
+            continue
+        limits = json.loads((ROOT / relative).read_text())["limits"]
+        assert {k: limits[k] for k in OFFICIAL_LIMITS} == OFFICIAL_LIMITS, relative
+    largest = 49.3 * 1024 * 1024
+    assert OFFICIAL_LIMITS["max_document_bytes"] > largest
+    assert OFFICIAL_LIMITS["max_request_bytes"] * 3 / 4 > largest  # one PDF fits a request
+    assert 58 * 1024 * 1024 < OFFICIAL_LIMITS["max_request_bytes"] * 3 / 4 < 61 * 1024 * 1024
 
 
 def test_config_errors_name_the_field(tmp_path) -> None:

@@ -1,6 +1,6 @@
 # Module guide — write and connect your Assessment Package
 
-kit 0.4.0 | worker protocol `apctt-worker-v2`
+kit 0.5.0 | worker protocol `apctt-worker-v2`
 
 Your submission is a Python package with one class that the server calls for each case. This page
 describes everything that class receives, what it must return, the environment it runs in, how
@@ -80,7 +80,7 @@ my_submission/
 ├── participant_module/
 │   ├── __init__.py
 │   ├── adapter.py
-│   ├── LICENSE                 Apache-2.0 or MIT (part of the package hash)
+│   ├── LICENSE                 the MIT text (part of the package hash; D72)
 │   └── THIRD_PARTY_NOTICES.md
 └── assets/                 weights and rules your team trained or wrote (optional)
 ```
@@ -94,7 +94,9 @@ with `participant_example/demo_rules.py`.
 
 ## 2. What `load` receives
 
-`config` is a plain dict (JSON types only):
+`config` is a plain dict (JSON types only). It is shown here with the two-criterion DEMO checklist
+to keep it short; `config/dev.json` and your configuration of README step 6 pass the official
+checklist (`APCTT-2026-CHECKLIST-v1`, twelve criteria) in the same form:
 
 ```json
 {
@@ -125,8 +127,9 @@ with `participant_example/demo_rules.py`.
 ```
 
 - `checklist` is the only source of criterion IDs. Use `criterion_id` exactly; your result needs one
-  entry per criterion. The official checklist will have different IDs and descriptions; do not
-  hard-code the DEMO IDs. The checklist never contains answers or reference labels.
+  entry per criterion. The official checklist (`contracts/checklist.official.json`, `APCTT-C01` to
+  `APCTT-C12`) has other IDs and descriptions than the DEMO one shown above; do not hard-code
+  either. The checklist never contains answers or reference labels.
 - `module.settings` is your own configuration (thresholds, file names, feature switches). It is part
   of the server configuration hash, so changing it changes `config_sha256`.
 - `asset_root` is a `pathlib.Path` to your assets. Treat it as read-only; its files are part of the
@@ -243,7 +246,7 @@ from apctt_contracts.results import validate_result
 from participant_module.adapter import AssessmentModule
 
 request = json.loads(Path("docs/EXAMPLE_REQUEST.json").read_text())
-checklist = json.loads(Path("contracts/checklist.demo.json").read_text())
+checklist = json.loads(Path("contracts/checklist.official.json").read_text())
 config = {
     "checklist": {"version": checklist["version"], "criteria": checklist["criteria"]},
     "module": {"settings": {}},
@@ -389,22 +392,50 @@ same time limit. The worker then sees no GPU (`CUDA_VISIBLE_DEVICES=""`), and to
 CPU. With `cuda:0`, your module uses the machine's NVIDIA GPU; the server checks at start-up that
 CUDA works in the worker environment and never falls back to the CPU.
 
-The reference GPU is an RTX 3070 Laptop GPU with 8 GB VRAM. Every catalogue model fits a budget of
+The event machine is an Asus TUF Dash F15 FX516PR-HN002 (decision D76): Intel Core i7-11370H with
+4 cores and 8 threads, 16 GB of RAM, and the reference GPU, an RTX 3070 Laptop GPU with 8 GB VRAM.
+At least 12 GB of RAM is available to your worker (decision D80; the rest is for the operating
+system, the kit server and the file cache), and time a CPU-only module on 4 cores. Every catalogue model fits a budget of
 at most 7.0 GiB peak at 8,192 tokens of context (language models) or a batch of 32 × 512 tokens
 (encoders); the figures in [MODEL_CATALOG.md](MODEL_CATALOG.md) are estimates until the organizer
 measures them on that GPU. Several models at once, longer inputs or larger batches can exceed the
 card: an out-of-memory error fails the case (`OUT_OF_MEMORY`). The 4-bit models need a CUDA GPU.
 
+**Measuring your worker's RAM.** The kit reports GPU peaks only (`diagnostics.compute`); on the CPU
+`unavailable_reasons.peak_memory` is `NOT_MEASURED`. Measure the peak resident memory yourself, on
+your largest realistic cases, and compare it with the 12 GB available to your worker on the event
+machine (decision D80):
+
+- Inside your module, at the end of `assess` (the worker process runs exactly one case):
+
+  ```python
+  import resource
+  import sys
+
+  peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss  # KiB on Linux, bytes on macOS
+  print(f"peak RSS {peak / 1024 / 1024:.2f} GiB (Linux)", file=sys.stderr)
+  ```
+
+  The line is in `server_data/jobs/<assessment_id>/stderr.log`. `ru_maxrss` covers this process
+  only; add `resource.RUSAGE_CHILDREN` if your module starts processes of its own.
+- Outside the server, on Linux: run the direct check of §6 with the base's Python under
+  `/usr/bin/time -v` and read "Maximum resident set size (kbytes)".
+
+Remove or keep the stderr line as you like: logs are never parsed or scored.
+
 ### 7.5 Loading time
 
 Every case starts a new process, so every case loads its models again, inside the 3-minute limit
 (§5). Load once in `load()`, never per criterion, and time `timings_ms.load` with the models you
-use: the large 4-bit models read 14.50–16.35 GB from disk and quantise it on every case.
+use: the large 4-bit models read 14.50–16.35 GB from disk and quantise it on every case, and the
+event machine's 16 GB of RAM cannot keep those weights in the file cache between cases.
 
 ## 8. Connect your module to the local server
 
 1. Copy the configuration: `cp config/dev.json config/my.local.json` (`*.local.json` files are
-   meant for your own paths).
+   meant for your own paths). `config/dev.json` runs the official checklist
+   (`"checklist_path": "../contracts/checklist.official.json"`, decision D74), so your copy does
+   too; README step 6 makes the same file with a script.
 2. Edit `config/my.local.json` (relative paths are relative to the config file's directory):
 
    ```json
@@ -429,8 +460,15 @@ use: the large 4-bit models read 14.50–16.35 GB from disk and quantise it on e
 3. Start: `.venv/bin/python -m apctt_server --profile dev --config config/my.local.json`
 4. Check `curl -s http://127.0.0.1:8000/v1/package`: `package_id` is yours and
    `verification_status` is `verified`.
-5. Send cases (start with `docs/EXAMPLE_REQUEST.json`; write your own synthetic cases for your
-   criteria) and read `result_origin`, `result` and `diagnostics`.
+5. Send cases (start with `docs/EXAMPLE_REQUEST.json`, which is for the official checklist, then
+   the public sample cases of README step 7 and your own PDFs made into requests with
+   `tools/make_request.py`) and read `result_origin`, `result` and `diagnostics`.
+6. Once, run with a changed checklist: copy `contracts/checklist.demo.json` (two DEMO criteria),
+   change its criterion IDs and `version`, point `checklist_path` of a second copy of your
+   configuration at it, and make the requests with `tools/make_request.py --checklist <copy>`.
+   This is the only reason to use the DEMO checklist: it shows that your module takes the
+   criteria from `config["checklist"]` instead of hard-coding the twelve official IDs. The
+   organizer runs the official checklist.
 
 **Use a new `request_id` after each code change.** A `request_id` is tied to the exact case, the
 configuration and your package hash. Re-sending an old ID after you changed your code returns
@@ -441,9 +479,10 @@ Either use fresh IDs (for example `dev-0001`, `dev-0002`, …) or stop the serve
 ## 9. Before you submit
 
 - [ ] `result_origin` is `module` for all your test cases, with no `output_issues`.
-- [ ] You tested with a checklist whose IDs differ from the DEMO IDs (edit a copy of
-      `contracts/checklist.demo.json` and point `checklist_path` at it; also set `checklist_version`
-      in your test cases to its `version`).
+- [ ] You ran your module with the official checklist (README step 6) on real reports, at least
+      the 3 public sample cases of the diagnostic run (`tools/get_public_cases.py --smoke`).
+- [ ] You tested once with a checklist whose IDs differ (§8 step 6), so that nothing depends on
+      hard-coded criterion IDs.
 - [ ] Every case finishes well within the time limit, including `load`.
 - [ ] `reset_case` and `close` never raise.
 - [ ] Nothing is downloaded at run time: your own files are inside `asset_root`, catalogue

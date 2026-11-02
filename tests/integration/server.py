@@ -37,7 +37,7 @@ def base_config(
     config.update(
         data_dir=str(tmp_path / "server_data"),
         worker_tmp_dir=str(tmp_path / "worker_tmp"),
-        checklist_path=str(ROOT / "contracts/checklist.demo.json"),
+        checklist_path=str(ROOT / "contracts/checklist.official.json"),
         bind_port=free_port(),
     )
     config["module"].update(

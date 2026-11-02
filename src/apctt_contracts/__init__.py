@@ -5,7 +5,7 @@ Importing the package root stays dependency-free so stdlib-only helpers remain u
 """
 
 CONTRACT_VERSION = "0.3.0"
-KIT_VERSION = "0.4.0"
+KIT_VERSION = "0.5.0"
 API_VERSION = "apctt-api-v0.2-draft"
 WORKER_PROTOCOL_VERSION = "apctt-worker-v2"
 CANONICALIZATION = "python-json-sortkeys-v1"

@@ -1,18 +1,20 @@
-"""Pack and validate the minimal Stage 1 submission zip (decisions D59, D63, D64, D65).
+"""Pack and validate the minimal Stage 1 submission zip (decisions D59, D63, D64, D72, D73).
 
     python tools/make_submission.py SOURCE_DIR [--output DIR] [--json]
     python tools/make_submission.py --check TEAM_submission.zip [--json]
 
 The submission contains no environment: the organizer copies it into its reference kit and runs it
 in the one common base environment that every team uses (D64), with the catalogue models in the
-read-only model store (APCTT_MODEL_STORE). Each of the three submissions (1 check, 2 interim,
-3 final) is checked in full with these rules, the same for every team; this tool is the check the
-organizer runs. Packing takes only these entries from SOURCE_DIR and leaves everything else out:
+read-only model store (APCTT_MODEL_STORE). Each team may submit up to two times, and the latest
+valid submission received by the deadline is its final model (D73); valid means accepted by these
+rules, checked in full for every submission and the same for every team: this tool is the check
+the organizer runs. Packing takes only these entries from SOURCE_DIR and leaves everything else
+out:
 
     participant_module/   code and rules: __init__.py, adapter.py (entry point
-                          participant_module.adapter:AssessmentModule), LICENSE (Apache-2.0 or
-                          MIT), THIRD_PARTY_NOTICES.md (also the licence of any third-party
-                          pure-Python source you copied in)
+                          participant_module.adapter:AssessmentModule), LICENSE (the MIT
+                          text, D72), THIRD_PARTY_NOTICES.md (also the licence of any
+                          third-party pure-Python source you copied in)
     assets/               only weights and rules the team trained or wrote (may be empty)
     submission.json       team, package_id, package_version, base_id, license, compute, settings,
                           models (contracts/submission.schema.json)
@@ -39,8 +41,9 @@ after the submission); a models[] entry that names a
 model outside the catalogue (contracts/model-catalog.json), ships a catalogue model (public model
 weights are never shipped) or names a base_model outside the catalogue; a base_id other than this
 kit's common base; a zip over 2,000,000,000 bytes; a package hash that differs from the declared
-one; and anything tools/check_licenses.py --bundle denies (the team licence rule of decision D53:
-submission.json "license" Apache-2.0 or MIT and a non-empty participant_module/LICENSE).
+one; and anything tools/check_licenses.py --bundle denies (the team licence rule of decision D72:
+submission.json "license" MIT and a non-empty participant_module/LICENSE; Apache-2.0, accepted
+for the team's own work until D72, is refused with a message saying so).
 
 Third-party pure-Python modules may be copied into participant_module/ with their licences in
 THIRD_PARTY_NOTICES.md; if a licence or security problem arises later, the team bears the legal

@@ -1,0 +1,231 @@
+{
+  "declaration_version": "cache-kita-declaration-v1",
+  "example_only": false,
+  "team": "CACHE-KITA",
+  "package_id": "cache-kita-trl",
+  "package_version": "0.1.0",
+  "declared_package_sha256": null,
+  "team_training": "no_team_training",
+  "training": null,
+  "data_sources": [
+    {
+      "source": "Team-written synthetic report",
+      "version": "1",
+      "date": "2026-10-24",
+      "role": "format example",
+      "label_origin": "synthetic example written by the team; not a real technology",
+      "license": "MIT"
+    },
+    {
+      "source": "NASA NTRS 20190002499: BALLET: Balloon Locomotion for Extreme Terrain: NASA Innovative Advanced Concepts (NIAC) - Phase I Final Report",
+      "url": "https://ntrs.nasa.gov/citations/20190002499",
+      "version": "NTRS record 20190002499 (OTHER)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: GOV_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20160010587: Economical Production of Pu-238: NIAC Phase I Final Report",
+      "url": "https://ntrs.nasa.gov/citations/20160010587",
+      "version": "NTRS record 20160010587 (OTHER)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20140003189: Wide Field X-Ray Telescope Mission Concept Study Results",
+      "url": "https://ntrs.nasa.gov/citations/20140003189",
+      "version": "NTRS record 20140003189 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20260001009: Manufacturing and Scale-Up of Natural Fiber Composite eVTOL Propeller Skin and C-Channel",
+      "url": "https://ntrs.nasa.gov/citations/20260001009",
+      "version": "NTRS record 20260001009 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: MAY_INCLUDE_COPYRIGHT_MATERIAL"
+    },
+    {
+      "source": "NASA NTRS 20110014980: Characterization Testing of the Teledyne Passive Breadboard Fuel Cell Powerplant",
+      "url": "https://ntrs.nasa.gov/citations/20110014980",
+      "version": "NTRS record 20110014980 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20140002784: Cold-end Subsystem Testing for the Fission Power System Technology Demonstration Unit",
+      "url": "https://ntrs.nasa.gov/citations/20140002784",
+      "version": "NTRS record 20140002784 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20080012738: Environmental Testing of the NEXT PM1 Ion Engine",
+      "url": "https://ntrs.nasa.gov/citations/20080012738",
+      "version": "NTRS record 20080012738 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: GOV_PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20170001508: Near Earth Asteroid Scout Solar Sail Engineering Development Unit Test Suite",
+      "url": "https://ntrs.nasa.gov/citations/20170001508",
+      "version": "NTRS record 20170001508 (CONFERENCE_PAPER)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20110015223: Multi-Evaporator Miniature Loop Heat Pipe for Small Spacecraft Thermal Control: Validation Results - Part 2",
+      "url": "https://ntrs.nasa.gov/citations/20110015223",
+      "version": "NTRS record 20110015223 (CONFERENCE_PAPER)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20080014216: High-Rate Wireless Airborne Network Demonstration (HiWAND) Flight Test Results",
+      "url": "https://ntrs.nasa.gov/citations/20080014216",
+      "version": "NTRS record 20080014216 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20190031814: Airborne Spacing for Terminal Arrival Routes (ASTAR) Proof-of-Concept Flight Test",
+      "url": "https://ntrs.nasa.gov/citations/20190031814",
+      "version": "NTRS record 20190031814 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: GOV_PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20150000734: General Dynamic (GD) Launch Waveform On-Orbit Performance Report",
+      "url": "https://ntrs.nasa.gov/citations/20150000734",
+      "version": "NTRS record 20150000734 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: GOV_PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20140005545: Post-flight Analysis of Mars Science Laboratory Entry Aerothermal Environment and Thermal Protection System Response",
+      "url": "https://ntrs.nasa.gov/citations/20140005545",
+      "version": "NTRS record 20140005545 (CONFERENCE_PAPER)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20120013194: Aquarius Radiometer Performance: Early On-Orbit Calibration and Results",
+      "url": "https://ntrs.nasa.gov/citations/20120013194",
+      "version": "NTRS record 20120013194 (CONFERENCE_PAPER)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20100017479: Intelligent Flexible Materials for Space Structures: Expandable Habitat Engineering Development Unit",
+      "url": "https://ntrs.nasa.gov/citations/20100017479",
+      "version": "NTRS record 20100017479 (CONTRACTOR_REPORT)",
+      "date": "2026-10-24",
+      "role": "evaluation: labelled test case",
+      "label_origin": "team judgement from report text",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20160009293: NIAC Phase I Study Final Report on Large Ultra-Lightweight Photonic Muscle Space Structures",
+      "url": "https://ntrs.nasa.gov/citations/20160009293",
+      "version": "NTRS record 20160009293 (OTHER)",
+      "date": "2026-10-24",
+      "role": "evaluation: held-out test case",
+      "label_origin": "team judgement from report text; held-out set, labelled before any module run",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED; the PDF carries an all-rights-reserved notice on every page (not redistributed)"
+    },
+    {
+      "source": "NASA NTRS 20260001044: Experimental Demonstration of a Supersonic Spike Ejector",
+      "url": "https://ntrs.nasa.gov/citations/20260001044",
+      "version": "NTRS record 20260001044 (TECHNICAL_MEMORANDUM)",
+      "date": "2026-10-24",
+      "role": "evaluation: held-out test case",
+      "label_origin": "team judgement from report text; held-out set, labelled before any module run",
+      "license": "NTRS copyright determination: GOV_PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20150009948: Performance and Environmental Test Results of the High Voltage Hall Accelerator Engineering Development Unit",
+      "url": "https://ntrs.nasa.gov/citations/20150009948",
+      "version": "NTRS record 20150009948 (CONFERENCE_PAPER)",
+      "date": "2026-10-24",
+      "role": "evaluation: held-out test case",
+      "label_origin": "team judgement from report text; held-out set, labelled before any module run",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20200002413: Reconstruction of the Adaptable Deployable Entry and Placement Technology Sounding Rocket One Flight Test",
+      "url": "https://ntrs.nasa.gov/citations/20200002413",
+      "version": "NTRS record 20200002413 (CONFERENCE_PAPER)",
+      "date": "2026-10-24",
+      "role": "evaluation: held-out test case",
+      "label_origin": "team judgement from report text; held-out set, labelled before any module run",
+      "license": "NTRS copyright determination: PUBLIC_USE_PERMITTED"
+    },
+    {
+      "source": "NASA NTRS 20240006994: Smallsat 2024 - Starling Cubesat Swarm Technology Demonstration Flight Results",
+      "url": "https://ntrs.nasa.gov/citations/20240006994",
+      "version": "NTRS record 20240006994 (CONFERENCE_PAPER)",
+      "date": "2026-10-24",
+      "role": "evaluation: held-out test case",
+      "label_origin": "team judgement from report text; held-out set, labelled before any module run",
+      "license": "NTRS copyright determination: GOV_PERMITTED"
+    },
+    {
+      "source": "APCTT public sample cases (contracts/public-cases.json, USGS reports)",
+      "version": "kit 0.5.0",
+      "date": "2026-10-26",
+      "role": "evaluation: TRL accuracy check of the module (team/eval_usgs.py); not used for training",
+      "label_origin": "organizer's estimated TRL per report; not expert labels",
+      "linked_project": "",
+      "license": "U.S. public domain (USGS); some figures third-party, see the manifest's licence_note"
+    },
+    {
+      "source": "NASA NPR 7123.1 and EU Horizon TRL definitions (TRL 1-9 descriptions)",
+      "version": "as published",
+      "date": "2026-10-24",
+      "role": "rules: definitions behind team/TRL_CHEATSHEET.md and the keyword cues in participant_module/trl.py",
+      "label_origin": "not applicable (no labels)",
+      "linked_project": "",
+      "license": "U.S. public domain (NASA); European Union, reuse authorised (Commission Decision 2011/833/EU)"
+    }
+  ],
+  "inference_assets": {
+    "source_code": "participant_module/ (package hash in declared_package_sha256)",
+    "weights": [],
+    "prompts_or_rules": [
+      "participant_module/trl.py (TRL keyword cues, written by the team from team/TRL_CHEATSHEET.md)"
+    ],
+    "reference_assets": [],
+    "dependency_declarations": [
+      "the common base environment (apctt-base-9e7fe1324bb6)",
+      "no catalogue models (submission.json models[] is empty)"
+    ]
+  },
+  "notes": "No data is shipped in the package and nothing was trained: the NTRS reports and the public sample cases were only used to develop and check the rule-based module."
+}

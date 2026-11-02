@@ -25,7 +25,7 @@ the bundler) and set:
 
 ```json
 "module": {
-  "package_id": "apctt-team-module",
+  "package_id": "cache-kita-trl",
   "entrypoint": "participant_module.adapter:AssessmentModule",
   "module_root": "/absolute/path/to/APCTT-Hackathon-2026",
   "package_root": "/absolute/path/to/APCTT-Hackathon-2026/participant_module",
