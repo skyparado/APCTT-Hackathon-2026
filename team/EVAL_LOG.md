@@ -9,12 +9,15 @@ to make a decision, collect a fresh one.
 
 | Date | Code | Set | Cases | Mean A | Exact | B | Slowest case | Notes |
 |---|---|---|---|---|---|---|---|---|
+| 2026-11-02 | 9408880 | **held-out** | 4 of 5 | 0.500 | 1/4 | 0.333 | 0.2 s | kit 0.5, official checklist. NTRS-20160009293 not run (its PDF is not in git), so not comparable with 0.400: the 4 cases total 2.0, the same total as that run |
+| 2026-11-02 | 9408880 | dev (`data/cases`) | 16 | 0.781 | 12/16 | 0.333 | 0.3 s | kit 0.5, official checklist: same as 0c0cafe |
 | 2026-10-24 | ae81b72 | **held-out** | 5 | **0.400** | 1/5 | 0.333 | 1.4 s | always-abstain baseline 0.250 on this set |
 | 2026-10-24 | 0c0cafe | dev (`data/cases`) | 16 | 0.781 | 12/16 | 0.333 | 0.4 s | after tightening cues on these cases |
 | 2026-10-24 | 070beea | dev (`data/cases`) | 16 | 0.625 | 9/16 | 0.333 | 0.4 s | first real run, whole reports |
 | 2026-10-24 | 070beea | dev, gold quotes only (`team/eval_trl.py`) | 16 | 0.969 | 15/16 | n/a | n/a | upper bound: perfect retrieval |
 
 B stays at 0.333 while no criterion is ever marked `met` (the criterion judge, Task 11, is not in yet).
+From 2026-11-02 B is scored on the official criteria labelled so far (see `data/README.md`), not all 12.
 
 ## Why the held-out misses happen (diagnosis only, not tuned)
 
