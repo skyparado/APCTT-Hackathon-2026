@@ -20,10 +20,8 @@ from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-import pypdfium2  # noqa: E402
-
-from participant_module import trl  # noqa: E402
-from participant_module.adapter import _read_pages, _sentences  # noqa: E402
+from participant_module import pages, trl  # noqa: E402
+from participant_module.adapter import _sentences  # noqa: E402
 
 
 def always(level: int, label: dict) -> float:
@@ -44,8 +42,8 @@ def main() -> int:
         if int(case_id.rsplit("-", 1)[1]) % 2 not in remainder:
             continue
         start = time.monotonic()
-        sentences = [s for page in _read_pages(pypdfium2, str(args.pdf_dir / f"{case_id}.pdf"))
-                     for s in _sentences(page)]
+        records = pages.read_pages({"document_id": "D001", "path": str(args.pdf_dir / f"{case_id}.pdf")})
+        sentences = [s for record in records for s in _sentences(record["text"])]
         decision = trl.decide(sentences, case["assessment_target"]["type"])
         label = {"assessment_status": "completed", "trl": case["reference_labels"]["estimated_trl"]}
         rows.append((case_id, label, decision, trl.score_a(decision, label), time.monotonic() - start))

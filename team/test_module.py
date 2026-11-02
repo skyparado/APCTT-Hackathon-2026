@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from participant_module import budget, output  # noqa: E402
+from participant_module import budget, output, pages  # noqa: E402
 from participant_module.adapter import AssessmentModule  # noqa: E402
 
 CASE = {
@@ -136,29 +137,12 @@ class TimeGuardTests(unittest.TestCase):
         self.assertGreater(guard.remaining_ms(), 0)
 
 
-class _FakePdfium:
-    """Stands in for pypdfium2: serves fixed page texts per path; 'broken' paths raise."""
-
-    def __init__(self, docs: dict[str, list[str]]) -> None:
-        self._docs = docs
-
-    def PdfDocument(self, path: str):  # noqa: N802 - mirrors the pypdfium2 API
-        if path not in self._docs:
-            raise RuntimeError(f"cannot open {path}")
-        return _FakeDoc(
-            SimpleNamespace(
-                get_textpage=lambda t=text: SimpleNamespace(get_text_range=lambda: t, close=lambda: None),
-                close=lambda: None,
-            )
-            for text in self._docs[path]
-        )
-
-
-class _FakeDoc(list):
-    """A list of pages with the close() that pypdfium2 documents have."""
-
-    def close(self) -> None:
-        pass
+def _fake_read_pages(docs: dict[str, list[str]]):
+    """Stands in for pages.read_pages: fixed page texts per path; other paths give no pages."""
+    def read(document: dict, deadline=None) -> list[dict]:
+        return [{"document_id": document["document_id"], "page": number, "text": text}
+                for number, text in enumerate(docs.get(document.get("path"), []), start=1)]
+    return read
 
 
 class AdapterTrlTests(unittest.TestCase):
@@ -167,10 +151,10 @@ class AdapterTrlTests(unittest.TestCase):
     def _run(self, docs: dict[str, list[str]], case_docs: list[dict], target_type: str = "component") -> dict:
         module = AssessmentModule()
         module.load({"checklist": self.CHECKLIST}, Path("."))
-        module._pdfium = _FakePdfium(docs)
         case = dict(CASE, assessment_target={"target_id": "T001", "type": target_type, "description": "x"},
                     documents=case_docs)
-        result = module.assess(case, SimpleNamespace(time_budget_ms=180000, remaining_ms=lambda: 170000))
+        with mock.patch.object(pages, "read_pages", _fake_read_pages(docs)):
+            result = module.assess(case, SimpleNamespace(time_budget_ms=180000, remaining_ms=lambda: 170000))
         self.assertEqual(output.validate_local(result, case, IDS), [])
         return result
 
@@ -199,13 +183,9 @@ class AdapterTrlTests(unittest.TestCase):
         self.assertEqual(result["predicted_trl"], 9)
         self.assertIn("D002 p.1", result["trl_rationale"])
 
-    def test_no_pdf_library_abstains(self) -> None:
-        module = AssessmentModule()
-        module.load({"checklist": self.CHECKLIST}, Path("."))
-        module._pdfium = None
-        result = module.assess(CASE, SimpleNamespace(time_budget_ms=180000, remaining_ms=lambda: 170000))
+    def test_no_readable_pages_abstains(self) -> None:
+        result = self._run({}, [{"document_id": "D001", "page_count": 1, "path": "broken.pdf"}], "technology")
         self.assertEqual(result["assessment_status"], "abstained")
-        self.assertEqual(output.validate_local(result, CASE, IDS), [])
 
 
 if __name__ == "__main__":

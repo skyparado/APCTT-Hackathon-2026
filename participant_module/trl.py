@@ -74,6 +74,11 @@ ABSTAIN_SCOPE = "ambiguous scope"
 _TARGET_DEFAULT = {"technology": 6, "system": 7}
 
 
+def level_is_claim_or_plan(sentence: str) -> bool:
+    """A readiness claim, or something that has not happened: never evidence for a criterion."""
+    return bool(_TRL_CLAIM.search(sentence) or _NOT_DONE.search(sentence))
+
+
 def level_cues(sentence: str) -> set[int]:
     """TRL levels this sentence is evidence for; empty if it is a claim, a plan or a failure."""
     if (_TRL_CLAIM.search(sentence) or _NOT_DONE.search(sentence) or _FAILED.search(sentence)

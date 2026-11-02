@@ -7,7 +7,13 @@
   "entrypoint": "participant_module.adapter:AssessmentModule",
   "declared_package_sha256": null,
   "license": "MIT",
-  "compute": {"device": "cpu"},
+  "compute": {
+    "device": "cpu"
+  },
   "settings": {},
-  "models": []
+  "models": [
+    {
+      "catalog_id": "deberta-v3-base-zeroshot-v2.0-c"
+    }
+  ]
 }
