@@ -190,6 +190,10 @@ def main() -> int:
         if res_status == "failed":
             failures += 1
             notes.append(f"error_code={result.get('error_code')}")
+        else:
+            unscored = [c for c in label.get("criteria") or {} if c not in result.get("criterion_status", {})]
+            if unscored:
+                notes.append(f"labelled criteria not in the result, not scored: {unscored}")
         if diag.get("output_issues"):
             notes.append(f"output_issues={diag['output_issues']}")
         if diag.get("warning_codes"):

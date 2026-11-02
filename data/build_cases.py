@@ -27,7 +27,10 @@ sys.path.insert(0, str(ROOT / "tools"))
 from make_request import build_request  # noqa: E402  (the kit's own base64 + sha256 logic)
 
 CASES = ROOT / "data" / "cases"
-IDENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}")
+CHECKLIST = json.loads((ROOT / "contracts" / "checklist.official.json").read_text(encoding="utf-8"))
+CRITERION_IDS = {c["criterion_id"] for c in CHECKLIST["criteria"]}
+MAX_DOCUMENTS = 3  # official limit, config/dev.json max_documents (decision D77)
+IDENT =re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}")
 CASE_REQUIRED = {
     "schema_version", "input_profile", "checklist_version", "case_id", "assessment_as_of",
     "assessment_target", "intended_application", "intended_environment", "title", "documents",
@@ -60,8 +63,10 @@ def check_case(case: dict, case_dir: Path) -> list[str]:
     if not IDENT.fullmatch(str(target.get("target_id", ""))):
         issues.append("case.json: assessment_target.target_id is not an identifier")
     docs = case.get("documents") or []
-    if not 1 <= len(docs) <= 20:
-        issues.append("case.json: needs 1 to 20 documents")
+    if not 1 <= len(docs) <= MAX_DOCUMENTS:
+        issues.append(f"case.json: needs 1 to {MAX_DOCUMENTS} documents")
+    if case.get("checklist_version") != CHECKLIST["version"]:
+        issues.append(f"case.json: checklist_version must be {CHECKLIST['version']} (the server answers 422 otherwise)")
     ids = [d.get("document_id") for d in docs]
     if len(set(ids)) != len(ids):
         issues.append("case.json: duplicate document_id")
@@ -123,6 +128,8 @@ def check_labels(labels: dict, case: dict, page_texts: dict[str, list[str]] | No
         issues.append("labels.json: completed needs at least one evidence item")
 
     for cid, crit in (labels.get("criteria") or {}).items():
+        if cid not in CRITERION_IDS:
+            issues.append(f"labels.json: criteria.{cid}: not a criterion of {CHECKLIST['version']}")
         if crit.get("status") not in CRITERION_STATUSES:
             issues.append(f"labels.json: criteria.{cid}: status must be one of {sorted(CRITERION_STATUSES)}")
         if crit.get("status") == "met" and not crit.get("pages"):

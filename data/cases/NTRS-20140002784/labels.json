@@ -31,18 +31,35 @@
     }
   ],
   "criteria": {
-    "DEMO-C01": {
+    "APCTT-C04": {
       "status": "met",
       "pages": [
         {
           "document_id": "D001",
           "page": 11
+        },
+        {
+          "document_id": "D001",
+          "page": 12
         }
       ]
     },
-    "DEMO-C02": {
+    "APCTT-C05": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C06": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C07": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C08": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C09": {
       "status": "insufficient evidence"
     }
   },
+  "criteria_origin": "derived from evidence[].trl_level (the TRL's own level met, higher levels insufficient evidence) and DEMO-C02 met (APCTT-C10 met); lower levels, APCTT-C11 and APCTT-C12 not labelled yet",
   "review_notes": "Trap p.12 and abstract: 'HRS testing will include...' and 'will demonstrate functionality' are future tense."
 }

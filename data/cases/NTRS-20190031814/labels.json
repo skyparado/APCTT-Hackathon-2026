@@ -31,22 +31,26 @@
     }
   ],
   "criteria": {
-    "DEMO-C01": {
+    "APCTT-C07": {
       "status": "met",
       "pages": [
         {
           "document_id": "D001",
-          "page": 5
+          "page": 46
         },
         {
           "document_id": "D001",
-          "page": 46
+          "page": 5
         }
       ]
     },
-    "DEMO-C02": {
+    "APCTT-C08": {
+      "status": "insufficient evidence"
+    },
+    "APCTT-C09": {
       "status": "insufficient evidence"
     }
   },
+  "criteria_origin": "derived from evidence[].trl_level (the TRL's own level met, higher levels insufficient evidence) and DEMO-C02 met (APCTT-C10 met); lower levels, APCTT-C11 and APCTT-C12 not labelled yet",
   "review_notes": "Trap: title says 'Proof-of-Concept' but this is a flight test. TRL 6 is arguable given only one day of trials."
 }
