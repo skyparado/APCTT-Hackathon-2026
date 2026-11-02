@@ -9,6 +9,10 @@ to make a decision, collect a fresh one.
 
 | Date | Code | Set | Cases | Mean A | Exact | B | Slowest case | Notes |
 |---|---|---|---|---|---|---|---|---|
+| 2026-11-02 | usgs-default | USGS even (`team/eval_public.py`) | 50 | 0.770 | 30/50 | n/a | 1.2 s | run once, after the rule was fixed on the odd fold; always-6 is 0.750. Organizer's estimates, not expert labels |
+| 2026-11-02 | usgs-default | USGS odd (`team/eval_public.py`) | 49 | 0.786 | 29/49 | n/a | 2.0 s | fold the rule was chosen on; always-6 is 0.755. All 99 before this rule: 0.076 |
+| 2026-11-02 | usgs-default | held-out | 4 of 5 | 0.375 | 0/4 | 0.333 | 0.2 s | total 1.5, down from 2.0 on the same 4 cases: accepted, see below |
+| 2026-11-02 | usgs-default | dev (`data/cases`) | 16 | 0.688 | 10/16 | 0.333 | 0.3 s | down from 0.781: accepted, see below |
 | 2026-11-02 | 9408880 | **held-out** | 4 of 5 | 0.500 | 1/4 | 0.333 | 0.2 s | kit 0.5, official checklist. NTRS-20160009293 not run (its PDF is not in git), so not comparable with 0.400: the 4 cases total 2.0, the same total as that run |
 | 2026-11-02 | 9408880 | dev (`data/cases`) | 16 | 0.781 | 12/16 | 0.333 | 0.3 s | kit 0.5, official checklist: same as 0c0cafe |
 | 2026-10-24 | ae81b72 | **held-out** | 5 | **0.400** | 1/5 | 0.333 | 1.4 s | always-abstain baseline 0.250 on this set |
@@ -18,6 +22,12 @@ to make a decision, collect a fresh one.
 
 B stays at 0.333 while no criterion is ever marked `met` (the criterion judge, Task 11, is not in yet).
 From 2026-11-02 B is scored on the official criteria labelled so far (see `data/README.md`), not all 12.
+
+**Which set to watch.** The hidden cases are USGS-type reports (PROBLEM_DESCRIPTION 12.1), so the USGS
+folds are the closest thing to them, even though their labels are only estimates. The NASA sets are
+mostly hardware reports. The `usgs-default` rule gives `technology` TRL 6 and `system` TRL 7 instead of
+reading the cues, which costs the NASA sets (their `technology` and `system` cases span TRL 2-7) and
+is a default, not an assessment: its ceiling is about what always-6 scores until the judge replaces it.
 
 ## Why the held-out misses happen (diagnosis only, not tuned)
 

@@ -200,7 +200,7 @@
       "source": "APCTT public sample cases (contracts/public-cases.json, USGS reports)",
       "version": "kit 0.5.0",
       "date": "2026-10-26",
-      "role": "evaluation: TRL accuracy check of the module (team/eval_usgs.py); not used for training",
+      "role": "rules and evaluation: the estimated TRLs set the default TRL per target type in participant_module/trl.py; TRL accuracy check (team/eval_public.py); no model trained",
       "label_origin": "organizer's estimated TRL per report; not expert labels",
       "linked_project": "",
       "license": "U.S. public domain (USGS); some figures third-party, see the manifest's licence_note"

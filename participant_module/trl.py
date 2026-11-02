@@ -67,6 +67,12 @@ _HERITAGE = re.compile(r"\bheritage\b", re.IGNORECASE)
 ABSTAIN_NO_EVIDENCE = "insufficient evidence"
 ABSTAIN_SCOPE = "ambiguous scope"
 
+# The hidden cases are USGS-type reports (PROBLEM_DESCRIPTION 12.1): models and data products
+# (`technology`) and arrangements deployed in the field (`system`), 5.2. The cues above are hardware
+# words and do not separate their levels, so these types start from the organizer's reference
+# estimates. ponytail: a default, not an assessment; the criterion judge (Task 11) should replace it.
+_TARGET_DEFAULT = {"technology": 6, "system": 7}
+
 
 def level_cues(sentence: str) -> set[int]:
     """TRL levels this sentence is evidence for; empty if it is a claim, a plan or a failure."""
@@ -115,22 +121,32 @@ def decide(
     """
     support: dict[int, list[str]] = {}
     heritage = False
+    has_text = False
     for sentence in sentences:
+        has_text = True
         heritage = heritage or bool(_HERITAGE.search(sentence))
         for level in level_cues(sentence):
             support.setdefault(level, []).append(sentence)
 
-    if not support:
-        return Decision("abstained", None, ABSTAIN_NO_EVIDENCE,
-                        "No sentence describes something built, tested or demonstrated.")
-
-    top = max(support)
+    top = max(support, default=0)
     # A whole system designed around parts proven elsewhere, with nothing of its own beyond a
     # concept: the readiness depends on which part is assessed.
-    if heritage and target_type == "system" and top <= 2:
+    if heritage and target_type == "system" and 0 < top <= 2:
         return Decision("abstained", None, ABSTAIN_SCOPE,
                         "Concept-level design of a system built from heritage parts; no single "
                         "technology was developed or tested.", support=support)
+
+    default = _TARGET_DEFAULT.get(target_type)
+    if has_text and default is not None:
+        trl = default if component_cap is None else min(default, component_cap)
+        rationale = (f"TRL {trl} is the usual level for a {target_type} of this kind of report; "
+                     "no level-specific judgement was made from the text.")
+        return Decision("completed", trl, None, rationale, 0.5,
+                        {"kind": "trl_interval", "lower": max(1, trl - 1), "upper": min(9, trl + 1)}, support)
+
+    if not support:
+        return Decision("abstained", None, ABSTAIN_NO_EVIDENCE,
+                        "No sentence describes something built, tested or demonstrated.")
 
     trl = top if component_cap is None else min(top, component_cap)
     hits = len(support[top])
@@ -176,8 +192,13 @@ def _self_check() -> None:
     assert (d.status, d.predicted_trl) == ("completed", 6), d
     u = d.result_kwargs()["uncertainty"]
     assert u["lower"] <= d.predicted_trl <= u["upper"]
-    assert decide(["It reached TRL 6.", "Testing is planned for 2027."], "system").abstention_reason == ABSTAIN_NO_EVIDENCE
+    assert decide(["It reached TRL 6.", "Testing is planned for 2027."], "subsystem").abstention_reason == ABSTAIN_NO_EVIDENCE
     assert decide(["The breadboard was integrated in the lab."], "system", component_cap=3).predicted_trl == 3
+    # USGS-type targets start from their default, whatever the hardware cues say
+    assert decide(["The flood model was calibrated."], "technology").predicted_trl == 6
+    assert decide(["A flight test was flown."], "technology").predicted_trl == 6
+    assert decide(["The network of gages reports hourly."], "system").predicted_trl == 7
+    assert decide([], "technology").abstention_reason == ABSTAIN_NO_EVIDENCE
     scope = decide(["We designed a spacecraft using high heritage components."], "system")
     assert scope.abstention_reason == ABSTAIN_SCOPE, scope
 

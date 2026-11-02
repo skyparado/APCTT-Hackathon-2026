@@ -129,7 +129,7 @@ class AssessmentModule:
             target_type = case.get("assessment_target", {}).get("type", "")
             decision = trl.decide(where, target_type)
             kwargs = decision.result_kwargs()
-            if decision.status == "completed":
+            if decision.support.get(decision.predicted_trl):
                 best = decision.support[decision.predicted_trl][0]
                 doc_id, page_no = where[best]
                 kwargs["trl_rationale"] += f' Strongest: {doc_id} p.{page_no}: "{best[:240]}"'
