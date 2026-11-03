@@ -53,7 +53,13 @@ sentence report a completed test of the target?", which belongs in the criterion
   page cannot score below 0 in Part C.
 - **The judge does not improve the TRL yet.** On the 49 odd USGS cases, rules using its scores reach 0.796 in
   sample but 0.746 under cross-validation, below the type default's 0.786. So the default stays.
-- **Worst cases, 2 threads:** 3 PDFs at the 300-page limit 88 s, largest PDF (USGS-SDG-017) 73 s, scanned report
-  (USGS-SDG-030) 69 s, against the 180 s limit. Peak worker memory about 1.2 GB. No GPU tested.
+- **Worst cases, 2 threads:** 3 PDFs at the 300-page limit 88 s, largest PDF (USGS-SDG-017) 73 s, USGS-SDG-030
+  (a 1982 typescript with an OCR text layer) 69 s, against the 180 s limit. Peak worker memory about 1.2 GB. No GPU
+  tested. These ran before the OCR changes below.
+- **OCR (`pages.py`):** runs on 172 of the 5,416 public pages, in 80 of 99 cases, because any page under 20
+  characters triggers it (mostly figures and blank pages). Rendering at scale 1 instead of 2 raised word recall on an
+  image-only copy of USGS-SDG-001 from 0.51 to 0.80 and restored word spaces; two-column pages still read across the
+  columns, so OCR quotes can be wrong there. An image-only USGS-SDG-075 (208 pages, 2 threads) takes 155 s and is
+  judged on the pages read, because OCR now stops with 90 s left. Before that, OCR left the judge too little time.
 - **Draft labels:** `data/public_criteria_labels.json` is unreviewed and written from candidate sentences, so
   treat the USGS B figures as a rough guide. Their gold pages can miss good pages, which understates B.
