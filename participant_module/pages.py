@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Callable
@@ -13,6 +14,7 @@ from typing import Any, Callable
 _LOGGER = logging.getLogger(__name__)
 # Stop OCR with time left for the judge, which needs about 80 s on 2 threads for the largest cases.
 _MIN_OCR_REMAINING_MS = 90_000
+_MIN_PAGE_REMAINING_MS = 60_000
 _CACHE_DIR = Path(tempfile.gettempdir()) / "apctt-page-cache"
 
 
@@ -36,6 +38,10 @@ def _read_pdf(path: Path, deadline: Callable[[], float] | None) -> tuple[list[st
         ocr_engine: Any = None
         ocr_unavailable = False
         for index in range(len(pdf)):
+            if deadline is not None and deadline() < _MIN_PAGE_REMAINING_MS:
+                print(f"Stopping PDF extraction for {path}: less than 60 seconds remain", file=sys.stderr)
+                cacheable = False
+                break
             page = pdf[index]
             try:
                 textpage = page.get_textpage()
