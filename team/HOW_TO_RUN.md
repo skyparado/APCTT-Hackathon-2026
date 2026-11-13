@@ -33,12 +33,12 @@ the bundler) and set:
   "example_only": false,
   "settings": {}
 },
-"worker": { "python": "/absolute/path/to/apctt-env/bin/python", "extra_env": {} }
+"worker": { "python": "/absolute/path/to/apctt-env/bin/python", "extra_env": { "APCTT_MODEL_STORE": "/absolute/path/to/models" } }
 ```
 
-`module_root` is the folder that **contains** `participant_module/`. Our skeleton module
-(`participant_module/adapter.py`) always abstains and is contract-valid, so it is a safe
-default to run against.
+`module_root` is the folder that **contains** `participant_module/`. The judge needs its model:
+`.venv/bin/python tools/get_models.py deberta-v3-base-zeroshot-v2.0-c --store /absolute/path/to/models`.
+Without it every criterion stays `insufficient evidence`.
 
 ## Run the demo case
 

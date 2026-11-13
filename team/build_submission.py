@@ -38,8 +38,8 @@ FIXED_SOURCES = [
         "source": "APCTT public sample cases (contracts/public-cases.json, USGS reports)",
         "version": "kit 0.5.0",
         "date": "2026-10-26",
-        "role": "evaluation: TRL accuracy check of the module (team/eval_usgs.py); not used for training",
-        "label_origin": "organizer's estimated TRL per report; not expert labels",
+        "role": "rules and evaluation: the estimated TRLs set the default TRL per target type in participant_module/trl.py; criterion thresholds in participant_module/judge.py set on 6 odd-numbered cases and checked on 3 even-numbered ones (team/eval_public.py, team/eval_judge.py); no model trained",
+        "label_origin": "organizer's estimated TRL per report, not expert labels; criterion labels on 9 cases are unreviewed drafts, data/public_criteria_labels.json",
         "linked_project": "",
         "license": "U.S. public domain (USGS); some figures third-party, see the manifest's licence_note",
     },
@@ -77,17 +77,18 @@ def write_declaration(submission: dict) -> dict:
             "source_code": "participant_module/ (package hash in declared_package_sha256)",
             "weights": [],
             "prompts_or_rules": [
-                "participant_module/trl.py (TRL keyword cues, written by the team from team/TRL_CHEATSHEET.md)"
+                "participant_module/trl.py (TRL defaults and keyword cues, from team/TRL_CHEATSHEET.md)",
+                "participant_module/judge.py (criterion statements, search terms and thresholds)",
             ],
             "reference_assets": [],
             "dependency_declarations": [
                 f"the common base environment ({submission['base_id']})",
-                "no catalogue models (submission.json models[] is empty)",
+                "catalogue models listed in submission.json models[]",
             ],
         },
         "notes": (
             "No data is shipped in the package and nothing was trained: the NTRS reports and the public "
-            "sample cases were only used to develop and check the rule-based module."
+            "sample cases were only used to develop and check the module."
         ),
     }
     path = SUBMISSION / "declaration.json"

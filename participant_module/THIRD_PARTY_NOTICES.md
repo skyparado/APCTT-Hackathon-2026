@@ -18,8 +18,11 @@ environment (`base_id` in `submission.json`); versions are those of `requirement
 | Package | Version | Licence | Used for |
 |---|---|---|---|
 | pypdfium2 | 5.14.0 | BSD-3-Clause, Apache-2.0 (PDFium and its bundled libraries keep their own licences, listed in the wheel) | page text extraction |
+| rapidocr-onnxruntime | 1.4.4 | Apache-2.0 | OCR of scanned pages |
+| torch | 2.11.0 | BSD-3-Clause | running the catalogue model |
+| transformers | 5.19.0 | Apache-2.0 | running the catalogue model |
 
 ## Models
 
-None. Catalogue models, once used, are listed by `catalog_id` in `submission.json` and are
-provided by the organizer's model store; their weights are never in this package.
+`deberta-v3-base-zeroshot-v2.0-c` (MIT), by `catalog_id` in `submission.json`, from the organizer's model
+store. Its weights are not in this package.
