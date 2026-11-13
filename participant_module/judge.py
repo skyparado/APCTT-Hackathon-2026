@@ -42,6 +42,10 @@ _BOILERPLATE = re.compile(
     r"public domain|copyrighted|reproduc(e|tion) of|prepared in cooperation|national technical information|"
     r"suggested citation|for more information|manuscript approved|does not constitute|as used in this report|"
     r"scientific investigations report \d|open-file report \d", re.IGNORECASE)
+# Table of contents: dot leaders ("Abstract... .1 Introduction") or a contents list run together.
+_CONTENTS = re.compile(r"(?:\.\s?){3,}|\bContents\b.*\bIntroduction\b")
+# One reference-list entry ("Guy, H.P., 1969, Laboratory theory..."): cites a work, never evidence.
+_REFERENCE_ENTRY = re.compile(r"^[A-Z][\w'’-]+, (?:[A-Z]\.\s?){1,3}(?:,|and\b).*?\b(?:19|20)\d{2}[a-z]?,")
 _REFERENCE_LINE = re.compile(r"\b(19|20)\d{2}[a-z]?[,.:]|\bdoi\b|https?://", re.IGNORECASE)
 _REFERENCE_HEADING = re.compile(r"^\s*(references( cited)?|bibliography|selected references)\s*$", re.IGNORECASE | re.MULTILINE)
 
@@ -100,6 +104,8 @@ class Judgement:
     status: str
     score: float = 0.0
     evidence: list[dict[str, Any]] = field(default_factory=list)
+    # The best verified candidates whatever their score, for align_with_trl.
+    fallback: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _is_reference_page(text: str) -> bool:
@@ -112,7 +118,8 @@ def _is_reference_page(text: str) -> bool:
 
 
 def _usable(sentence: str) -> bool:
-    if not 40 <= len(sentence) <= 450 or _NOT_PROSE.search(sentence) or _BOILERPLATE.search(sentence):
+    if (not 40 <= len(sentence) <= 450 or _NOT_PROSE.search(sentence) or _BOILERPLATE.search(sentence)
+            or _REFERENCE_ENTRY.search(sentence) or _CONTENTS.search(sentence)):
         return False
     if sum(c.isalpha() or c.isspace() for c in sentence) / len(sentence) < 0.8:
         return False  # tables and number runs
@@ -202,18 +209,10 @@ def load_entailment() -> Entailment | None:
 
 
 def _verified_span(sentence: Sentence) -> str | None:
-    span = sentence.text
-    original_page_text = sentence.original_page_text
-    if quotes.verify_quote(span, original_page_text):
-        return span
-
-    normalized_span = " ".join(span.split())
-    source_sentences = _SENTENCE_END.split(" ".join(original_page_text.split()))
-    for source_sentence in source_sentences:
-        normalized_source = " ".join(source_sentence.replace(chr(0xFFFE), "-").split())
-        if normalized_source == normalized_span and quotes.verify_quote(source_sentence, original_page_text):
-            return source_sentence
-    return None
+    # pdfium returns a line-break hyphen as U+FFFE (a non-character); the page prints "-", so the
+    # quote uses "-" too, and is checked against the page text read the same way.
+    page_text = sentence.original_page_text.replace(chr(0xFFFE), "-")
+    return sentence.text if quotes.verify_quote(sentence.text, page_text) else None
 
 
 def _keyword_judgement(candidates: Sequence[Sentence], description: str, target: str) -> Judgement:
@@ -267,17 +266,47 @@ def _judge_candidates(
     scores = model.score([c.text for c in candidates], profile.statement)
     ranked = sorted(zip(scores, candidates), key=lambda pair: -pair[0])
     evidence: list[dict[str, Any]] = []
-    pages: set[tuple[str, int]] = set()
+    fallback: list[dict[str, Any]] = []
     for score, sentence in ranked:
-        key = (sentence.document_id, sentence.page)
-        if score >= profile.threshold and key not in pages and len(evidence) < MAX_EVIDENCE:
-            span = _verified_span(sentence)
-            if span is None:
-                continue
-            pages.add(key)
-            evidence.append({"document_id": sentence.document_id, "page": sentence.page,
-                             "supporting_span": span})
-    return Judgement("met" if evidence else "insufficient evidence", ranked[0][0], evidence)
+        if len(fallback) >= MAX_EVIDENCE:
+            break
+        if any((item["document_id"], item["page"]) == (sentence.document_id, sentence.page) for item in fallback):
+            continue
+        span = _verified_span(sentence)
+        if span is None:
+            continue
+        item = {"document_id": sentence.document_id, "page": sentence.page, "supporting_span": span}
+        fallback.append(item)
+        if score >= profile.threshold:
+            evidence.append(item)
+    return Judgement("met" if evidence else "insufficient evidence", ranked[0][0], evidence, fallback)
+
+
+def criterion_level(description: str) -> int | None:
+    """The TRL a level criterion stands for ("... (TRL 6): ..."), None for the cross-cutting ones."""
+    level = _LEVEL.search(description)
+    return int(level.group(1)) if level else None
+
+
+def align_with_trl(judgements: dict[str, Judgement], criteria: Sequence[Mapping[str, str]], trl: int | None) -> None:
+    """Make the level criteria agree with the decided TRL, in place.
+
+    The checklist has one criterion per TRL level and labels follow that ladder, so a level above
+    the TRL is never met, and a level at or below it is met on its best verified sentences even
+    under the strict threshold. A missed `met` costs twice a wrong one in Part B. On the labelled
+    sets B rose from 0.694 to 0.781 (USGS drafts) and 0.442 to 0.627 (NASA): team/eval_ladder.py.
+    """
+    if trl is None:
+        return
+    for criterion in criteria:
+        level = criterion_level(criterion.get("description", ""))
+        judgement = judgements.get(criterion["criterion_id"])
+        if level is None or judgement is None:
+            continue
+        if level > trl:
+            judgements[criterion["criterion_id"]] = Judgement("insufficient evidence", judgement.score)
+        elif judgement.status != "met" and judgement.fallback:
+            judgements[criterion["criterion_id"]] = Judgement("met", judgement.score, judgement.fallback)
 
 
 def _criterion_priority(description: str) -> int:

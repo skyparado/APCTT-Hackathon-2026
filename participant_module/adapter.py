@@ -100,6 +100,8 @@ class AssessmentModule:
                                               lambda last: guard.have_ms(2000.0 * last))
 
             decision = trl.decide(where, target.get("type", ""))
+            if decision.status == "completed":
+                judge.align_with_trl(judgements, self._criteria, decision.predicted_trl)
             kwargs = decision.result_kwargs()
             if decision.support.get(decision.predicted_trl):
                 best = decision.support[decision.predicted_trl][0]
