@@ -14,17 +14,22 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from participant_module.retrieval import BM25Index
+from participant_module import budget, quotes
+from participant_module.retrieval import BM25Index, tokenize
 from participant_module.trl import level_is_claim_or_plan
 
 MODEL_PATH = "MoritzLaurer/deberta-v3-base-zeroshot-v2.0-c/bddf8c5411c34ac3565e16e04384fd68b2618dda"
-CANDIDATES_PER_CRITERION = 12
+CANDIDATES_PER_CRITERION = 8
+MAX_JUDGE_MODEL_SECONDS = 70.0
+MIN_REMAINING_MS = 60_000.0
+MODEL_CALL_HEADROOM_MS = 25_000.0
 MAX_EVIDENCE = 3
 BATCH_SIZE = 16
 DEFAULT_THRESHOLD = 0.5
@@ -87,6 +92,7 @@ class Sentence:
     document_id: str
     page: int
     text: str
+    original_page_text: str = ""
 
 
 @dataclass
@@ -125,7 +131,7 @@ def sentences_of(pages: Iterable[Mapping[str, Any]]) -> list[Sentence]:
         for sentence in _SENTENCE_END.split(flat):
             if sentence not in seen and _usable(sentence):
                 seen.add(sentence)
-                out.append(Sentence(page["document_id"], page["page"], sentence))
+                out.append(Sentence(page["document_id"], page["page"], sentence, text))
     return out
 
 
@@ -166,6 +172,8 @@ class Entailment:
         import torch
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+        torch.set_num_threads(4)
+        torch.manual_seed(42)
         self._torch = torch
         self._tokenizer = AutoTokenizer.from_pretrained(str(directory), local_files_only=True)
         self._model = AutoModelForSequenceClassification.from_pretrained(str(directory), local_files_only=True)
@@ -193,9 +201,67 @@ def load_entailment() -> Entailment | None:
     return Entailment(Path(store) / MODEL_PATH)
 
 
+def _verified_span(sentence: Sentence) -> str | None:
+    span = sentence.text
+    original_page_text = sentence.original_page_text
+    if quotes.verify_quote(span, original_page_text):
+        return span
+
+    normalized_span = " ".join(span.split())
+    source_sentences = _SENTENCE_END.split(" ".join(original_page_text.split()))
+    for source_sentence in source_sentences:
+        normalized_source = " ".join(source_sentence.replace(chr(0xFFFE), "-").split())
+        if normalized_source == normalized_span and quotes.verify_quote(source_sentence, original_page_text):
+            return source_sentence
+    return None
+
+
+def _keyword_judgement(candidates: Sequence[Sentence], description: str, target: str) -> Judgement:
+    profile = profile_for(description, target)
+    keywords = set(tokenize(profile.query))
+    if not keywords:
+        keywords = set(tokenize(profile.statement))
+    if not keywords:
+        return Judgement("insufficient evidence")
+    ranked = sorted(
+        (
+            (len(keywords.intersection(tokenize(sentence.text))), sentence)
+            for sentence in candidates
+        ),
+        key=lambda pair: -pair[0],
+    )
+    evidence: list[dict[str, Any]] = []
+    pages: set[tuple[str, int]] = set()
+    required_matches = min(2, len(keywords))
+    for matches, sentence in ranked:
+        key = (sentence.document_id, sentence.page)
+        if matches < required_matches:
+            break
+        if key in pages or len(evidence) >= MAX_EVIDENCE:
+            continue
+        span = _verified_span(sentence)
+        if span is None:
+            continue
+        pages.add(key)
+        evidence.append({
+            "document_id": sentence.document_id,
+            "page": sentence.page,
+            "supporting_span": span,
+        })
+    return Judgement("met" if evidence else "insufficient evidence", 0.0, evidence)
+
+
 def judge_criterion(search: SentenceSearch, model: Entailment, description: str, target: str) -> Judgement:
     profile = profile_for(description, target)
-    candidates = search.candidates(query_for(description, profile))
+    candidates = search.candidates(query_for(description, profile))[:CANDIDATES_PER_CRITERION]
+    return _judge_candidates(candidates, model, profile)
+
+
+def _judge_candidates(
+    candidates: Sequence[Sentence],
+    model: Entailment,
+    profile: Profile,
+) -> Judgement:
     if not candidates:
         return Judgement("insufficient evidence")
     scores = model.score([c.text for c in candidates], profile.statement)
@@ -205,22 +271,69 @@ def judge_criterion(search: SentenceSearch, model: Entailment, description: str,
     for score, sentence in ranked:
         key = (sentence.document_id, sentence.page)
         if score >= profile.threshold and key not in pages and len(evidence) < MAX_EVIDENCE:
+            span = _verified_span(sentence)
+            if span is None:
+                continue
             pages.add(key)
             evidence.append({"document_id": sentence.document_id, "page": sentence.page,
-                             "supporting_span": sentence.text})
+                             "supporting_span": span})
     return Judgement("met" if evidence else "insufficient evidence", ranked[0][0], evidence)
+
+
+def _criterion_priority(description: str) -> int:
+    lowered = description.lower()
+    if "prototype" in lowered and "relevant environment" in lowered:
+        return 0
+    if "prototype" in lowered and "operational environment" in lowered:
+        return 1
+    if ("quantified results" in lowered or "against requirements" in lowered
+            or "acceptance criteria" in lowered):
+        return 2
+    if ("environment and test article" in lowered
+            or ("test conditions" in lowered and "configuration" in lowered)):
+        return 3
+    if "assessment target" in lowered or "target itself" in lowered:
+        return 4
+    return 5
 
 
 def judge_case(records: Iterable[Mapping[str, Any]], criteria: Sequence[Mapping[str, str]], model: Entailment,
                target: str, keep_going: Callable[[float], bool]) -> dict[str, Judgement]:
-    """Judge every criterion; `keep_going(seconds_of_last_step)` False stops, leaving the rest unjudged."""
+    """Use model scoring within a bounded time budget, then judge by keywords."""
+    judge_started = time.monotonic()
     search = SentenceSearch(sentences_of(records))
     judgements: dict[str, Judgement] = {}
-    last = 0.0
-    for criterion in criteria:
-        if not keep_going(last):
-            break
+    ordered = sorted(enumerate(criteria), key=lambda item: (_criterion_priority(item[1]["description"]), item[0]))
+    keyword_only = False
+    for _, criterion in ordered:
         start = time.monotonic()
-        judgements[criterion["criterion_id"]] = judge_criterion(search, model, criterion["description"], target)
-        last = time.monotonic() - start
+        description = criterion["description"]
+        candidates = search.candidates(query_for(description, profile_for(description, target)))
+        reserve_check_seconds = max(
+            0.0,
+            (MIN_REMAINING_MS + MODEL_CALL_HEADROOM_MS - budget.DEFAULT_SAFETY_MS) / 2000.0,
+        )
+        judge_elapsed = time.monotonic() - judge_started
+        if not keyword_only and (
+            judge_elapsed + MODEL_CALL_HEADROOM_MS / 1000.0 >= MAX_JUDGE_MODEL_SECONDS
+            or not keep_going(reserve_check_seconds)
+        ):
+            keyword_only = True
+        if not keyword_only:
+            profile = profile_for(description, target)
+            judgement = _judge_candidates(
+                candidates[:CANDIDATES_PER_CRITERION],
+                model,
+                profile,
+            )
+            mode = "model"
+        else:
+            judgement = _keyword_judgement(candidates, description, target)
+            mode = "keyword"
+        judgements[criterion["criterion_id"]] = judgement
+        elapsed = time.monotonic() - start
+        print(
+            f"Criterion {criterion['criterion_id']} ({mode}): {elapsed:.3f}s, {judgement.status}",
+            file=sys.stderr,
+        )
     return judgements
