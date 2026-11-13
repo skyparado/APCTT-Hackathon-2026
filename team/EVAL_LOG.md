@@ -9,6 +9,10 @@ to make a decision, collect a fresh one.
 
 | Date | Code | Set | Cases | Mean A | Exact | B | Slowest case | Notes |
 |---|---|---|---|---|---|---|---|---|
+| 2026-11-13 | final-check | hard cases (`team/make_hard_cases.py`) + worker on 1 CPU core (`taskset -c 0`) | 9 + 5 | n/a | n/a | n/a | 101.6 s | 0 failed, 94/94 quotes on their page. A `component` target got TRL 2 before the default per type (70 of 99 public reports would: A 0.076), now 6. 1 core: slowest public case 70.6 s, 3 PDFs at 300 pages 60.1 s, 3 scanned PDFs 101.6 s (OCR stops with 90 s left) |
+| 2026-11-13 | final-check | USGS all, kit server on the packed bundle (`team/run_public.py`) | 99 | 0.778 | n/a | **0.781** | 38.9 s | + criteria aligned with the TRL, no reference-entry quotes, no U+FFFE in quotes. 0 failed, 1500/1500 quotes on their page, peak memory 2.3 GB. B on the 9 draft-labelled cases |
+| 2026-11-13 | quote-guard 80ebda8 | USGS all, kit server on the packed bundle (`team/run_public.py`) | 99 | 0.778 | n/a | 0.694 | 52.4 s | baseline for the row above: 0 failed, 775/775 quotes on their page; 8 cores, CPU, torch 4 threads |
+| 2026-11-13 | final-check | TRL-ladder policy, offline (`team/eval_ladder.py`) | 9 USGS + 16 NASA | n/a | n/a | 0.781 / 0.627 | n/a | was 0.694 / 0.442: a level above the decided TRL is never met, a level at or below it is met on its best verified sentence |
 | 2026-11-02 | full-pipeline | USGS even, draft labels (`team/eval_judge.py`) | 3 | n/a | n/a | **0.788** | 58 s | thresholds not tuned on these; 30 labelled criteria, labels unreviewed |
 | 2026-11-02 | full-pipeline | USGS odd, draft labels (`team/eval_judge.py`) | 6 | n/a | n/a | 0.675 | 42 s | thresholds set on these; 51 labelled criteria |
 | 2026-11-02 | full-pipeline | USGS all (`team/eval_public.py`) | 99 | 0.778 | 59/99 | n/a | n/a | TRL rule unchanged, judge results not used for the TRL; always-6 is 0.753 |
