@@ -74,12 +74,50 @@ class QuoteGuardTests(unittest.TestCase):
         self.assertEqual(result["evidence_reference"]["C1"], [])
         self.assertEqual(result["missing_evidence"]["C1"], "No verified evidence was found.")
 
-    def test_recovery_returns_original_page_sentence(self) -> None:
-        original = "The instrument was tested in a laboratory\ufffeunder controlled thermal conditions."
-        transformed = original.replace("\ufffe", "-")
+    def test_pdfium_hyphen_is_quoted_as_printed(self) -> None:
+        original = "The instrument was tested in a labora\ufffe\r\ntory under controlled thermal conditions."
+        transformed = " ".join(original.replace("\ufffe", "-").split())
         result = self._judge(transformed, original)
         self.assertEqual(result.status, "met")
-        self.assertEqual(result.evidence[0]["supporting_span"], original)
+        self.assertEqual(result.evidence[0]["supporting_span"], transformed)
+        self.assertNotIn("\ufffe", result.evidence[0]["supporting_span"])
+
+
+class ReferenceEntryTests(unittest.TestCase):
+    def test_reference_list_entries_are_never_evidence(self) -> None:
+        # Real quotes from the public-case run of 2026-11-13.
+        self.assertFalse(judge._usable("Guy, H.P., 1969, Laboratory theory and methods for sediment analysis: "
+                                       "U.S. Geological Survey Techniques of Water Resources"))
+        self.assertFalse(judge._usable("Smith, R.A., Alexander, R.B., and Schwartz, G.E., 2003, Natural background "
+                                       "concentrations of nutrients in streams and rivers"))
+        self.assertTrue(judge._usable("Duan smearing (Duan, 1983) was used to calculate a bias correction factor "
+                                      "of 2.12 for equation 1 and is also provided for the other equations."))
+
+    def test_table_of_contents_is_never_evidence(self) -> None:
+        # Real quotes from the hard-case and public runs of 2026-11-13.
+        self.assertFalse(judge._usable("Abstract... .1 Introduction. .1 Purpose and Scope of the flood study area."))
+        self.assertFalse(judge._usable("iii Contents Abstract 1 Introduction 1 Methodology 2 Deep-water Waves and "
+                                       "Storm Surges 2 Shallow-water Waves 2"))
+        self.assertTrue(judge._usable("The soil water contents were measured at 12 sites and compared with the "
+                                      "simulated values from the model."))
+
+
+class AlignWithTrlTests(unittest.TestCase):
+    def test_levels_follow_the_decided_trl(self) -> None:
+        item = {"document_id": "D001", "page": 3, "supporting_span": "The model was calibrated."}
+        criteria = [{"criterion_id": f"C{n}", "description": f"Level {n} (TRL {n}): text"} for n in (3, 6, 7)]
+        criteria.append({"criterion_id": "C10", "description": "Quantified results against requirements: text"})
+        judgements = {
+            "C3": judge.Judgement("insufficient evidence", 0.1, [], [item]),  # below threshold -> met on fallback
+            "C6": judge.Judgement("insufficient evidence", 0.0, [], []),      # nothing verified -> stays
+            "C7": judge.Judgement("met", 0.9, [item], [item]),                # above the TRL -> never met
+            "C10": judge.Judgement("insufficient evidence", 0.1, [], [item]),  # not a level -> untouched
+        }
+        judge.align_with_trl(judgements, criteria, 6)
+        self.assertEqual((judgements["C3"].status, judgements["C3"].evidence), ("met", [item]))
+        self.assertEqual(judgements["C6"].status, "insufficient evidence")
+        self.assertEqual((judgements["C7"].status, judgements["C7"].evidence), ("insufficient evidence", []))
+        self.assertEqual(judgements["C10"].status, "insufficient evidence")
 
 
 class PageBudgetTests(unittest.TestCase):

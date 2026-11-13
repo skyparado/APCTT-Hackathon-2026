@@ -73,6 +73,37 @@ With the server running on our module:
 Run it after every change and compare `run.json` files. `team/eval_trl.py` scores the TRL logic alone on
 the labels' gold quotes (no server), which is an upper bound, not the real score.
 
+## The 99 public USGS cases through the server (before every submission)
+
+The hidden cases are USGS-type, so this is the run that matters. Point the server at the **packed
+bundle** (`team/out/submission`, `declared_package_sha256` from the zip's `submission.json`), so it runs
+exactly what you upload and `/v1/package` shows `verified`.
+
+```bash
+.venv/bin/python tools/get_models.py deberta-v3-base-zeroshot-v2.0-c --store ~/apctt-models --read-only
+.venv/bin/python tools/get_public_cases.py --download --all --dir ~/apctt-cases/pdf
+.venv/bin/python tools/get_public_cases.py --make-requests --all --dir ~/apctt-cases/pdf --out ~/apctt-cases/req
+~/apctt-env/bin/python team/run_public.py --out ~/apctt-run          # about 40 min on 8 cores
+~/apctt-env/bin/python team/run_public.py USGS-SDG-012 USGS-SDG-040 USGS-SDG-061   # the organizer's 3 smoke cases
+```
+
+Pass: 0 failed or replaced cases, slowest case well under 180 s, 0 quote problems, and no case with zero
+criteria met (that would mean the judge model did not load).
+
+**Hard cases** the public set never exercises (scans, 3 PDFs at the 300-page limit, blank and duplicate
+documents, `component`/`subsystem` targets, missing optional fields; the list is in the script):
+
+```bash
+~/apctt-env/bin/python team/make_hard_cases.py --req ~/apctt-cases/req --out ~/apctt-hard
+~/apctt-env/bin/python team/run_public.py --req ~/apctt-hard/req --pdf ~/apctt-hard/pdf --out ~/apctt-hard/run
+```
+
+Pass: every case `completed` or `abstained` (HARD-BLANK abstains; HARD-OWNERPW is refused by the server
+with 422 before our module runs, as it would be at the event). For a slow machine, set
+`"launcher_argv": ["/usr/bin/taskset", "-c", "0"]` in a copy of the config (worker on 1 core) and rerun
+the heaviest cases: they must still finish inside 180 s. Don't run anything heavy alongside it: an
+overloaded machine makes the client time out and spoils the timings.
+
 ## Verify the module without the server (fast loop)
 
 ```bash
