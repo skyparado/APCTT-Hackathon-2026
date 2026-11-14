@@ -3,7 +3,6 @@ __pycache__/
 .venv/
 server_data/
 *.local.json
-.claude/
 data/cases/*/request.json
 data/heldout/*/request.json
 # all-rights-reserved notice on every page despite NTRS public-use marking; kept local until cleared
