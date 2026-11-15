@@ -1,5 +1,3 @@
-"""Select and verify concise evidence quotes from extracted page text."""
-
 from __future__ import annotations
 
 import re
@@ -55,7 +53,6 @@ def _short_window(sentence: str, query_terms: set[str]) -> str:
 
 
 def pick_quote(page_text: str, criterion_text: str) -> str | None:
-    """Return a high-overlap sentence (or exact substring) of at most ~300 chars."""
     query_terms = set(tokenize(criterion_text))
     if not query_terms:
         return None
@@ -75,6 +72,5 @@ def pick_quote(page_text: str, criterion_text: str) -> str | None:
 
 
 def verify_quote(quote: str, page_text: str) -> bool:
-    """Check whether a quote occurs on a page, allowing whitespace normalization only."""
     normalized_quote = _normalized(quote)
     return bool(normalized_quote) and normalized_quote in _normalized(page_text)

@@ -1,5 +1,3 @@
-"""PDF page extraction with optional OCR and a local content-addressed cache."""
-
 from __future__ import annotations
 
 import hashlib
@@ -12,15 +10,12 @@ from pathlib import Path
 from typing import Any, Callable
 
 _LOGGER = logging.getLogger(__name__)
-# Stop OCR with time left for the judge, which needs about 80 s on 2 threads for the largest cases.
 _MIN_OCR_REMAINING_MS = 90_000
 _MIN_PAGE_REMAINING_MS = 60_000
 _CACHE_DIR = Path(tempfile.gettempdir()) / "apctt-page-cache"
 
 
 def _ocr_page(page: Any, engine: Any) -> str:
-    # Scale 1 on purpose: on image-only USGS pages it keeps word spaces (word recall 0.95); scale 2-4
-    # glues words together (0.3-0.5), which leaves no sentence the judge can use.
     image = page.render(scale=1).to_pil()
     result, _ = engine(image)
     if not result:
@@ -79,7 +74,6 @@ def read_pages(
     document: dict[str, Any],
     deadline: Callable[[], float] | None = None,
 ) -> list[dict[str, Any]]:
-    """Read a PDF into page records; invalid PDFs are logged and return an empty list."""
     document_id = document.get("document_id")
     try:
         path = Path(document["path"])

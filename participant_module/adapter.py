@@ -1,21 +1,3 @@
-"""participant_module/adapter.py — the team's AssessmentModule (SPEC-09).
-
-Reads every page (`pages.py`), judges each checklist criterion with evidence and quotes
-(`judge.py`, `retrieval.py`), and decides the TRL (`trl.py`). `output.py` keeps the result
-contract-valid and `budget.py` returns before the 180 s limit. Without the model in the store, or
-short of time, criteria stay `insufficient evidence` and the TRL logic still runs.
-
-Entry point: participant_module.adapter:AssessmentModule
-
-Design notes for whoever extends this:
-  * Criterion IDs come only from `load()`'s checklist. Never hard-code the DEMO IDs; the
-    official checklist uses different ones.
-  * Build every result with `output.build_result` / `output.abstained` — do not assemble the
-    dict by hand, so the contract rules stay in one place.
-  * Check `guard.exhausted()` / `guard.have_ms(...)` before any expensive step and abstain
-    rather than risk a TIMEOUT.
-"""
-
 from __future__ import annotations
 
 import re
@@ -26,8 +8,6 @@ from typing import Any
 
 from participant_module import budget, judge, output, pages, trl
 
-# Sentence boundary: end punctuation, whitespace, then a capital or digit. Good enough for
-# report prose; abbreviations like "Fig. 3" split early, which only costs a weaker sentence.
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
 _NOT_FOUND_NOTE = "No candidate sentence supported this criterion strongly enough."
 _NOT_JUDGED_NOTE = "No criterion-level judgement was made: the model was unavailable or time ran short."
@@ -36,7 +16,7 @@ _NOT_JUDGED_NOTE = "No criterion-level judgement was made: the model was unavail
 def _sentences(text: str) -> Iterator[str]:
     flat = " ".join(text.split())
     for sentence in _SENTENCE_END.split(flat):
-        if len(sentence) >= 20:  # drop headers, page numbers, figure labels
+        if len(sentence) >= 20:
             yield sentence
 
 
@@ -49,11 +29,6 @@ class AssessmentModule:
         self._model: judge.Entailment | None = None
 
     def load(self, config: Mapping[str, Any], asset_root: Path) -> None:
-        """Read the checklist and settings. Load rules/weights from `asset_root` here.
-
-        The checklist is the only source of criterion IDs (DATA_CONTRACT §1.4). Nothing is
-        downloaded; `asset_root` is treated as read-only.
-        """
         checklist = config["checklist"]
         self._checklist_version = checklist["version"]
         self._criteria = list(checklist["criteria"])
@@ -61,13 +36,11 @@ class AssessmentModule:
         self._settings = config.get("module", {}).get("settings", {})
         try:
             self._model = judge.load_entailment()
-        except Exception:  # noqa: BLE001 - judge nothing rather than fail every case
+        except Exception:
             traceback.print_exc()
             self._model = None
 
     def assess(self, case: Mapping[str, Any], context: Any) -> dict[str, Any]:
-        """Assess one case. Never raises on a normal case: any unexpected error becomes a
-        clean `failed` result, and running out of time becomes an abstained result."""
         return output.safe_result(
             lambda: self._assess_case(case, context),
             case,
@@ -80,14 +53,12 @@ class AssessmentModule:
         guard = budget.TimeGuard(context)
         try:
             guard.checkpoint("assess-start")
-            # Read every document; a broken or encrypted PDF gives no pages, not a failure. Running
-            # low on time stops reading and decides on what was read so far.
             records: list[dict[str, Any]] = []
             for document in case.get("documents", []):
                 if guard.exhausted():
                     break
                 records += pages.read_pages(document, guard.remaining_ms)
-            where: dict[str, tuple[str, int]] = {}  # sentence -> (document_id, page)
+            where: dict[str, tuple[str, int]] = {}
             for record in records:
                 for sentence in _sentences(record["text"]):
                     where.setdefault(sentence, (record["document_id"], record["page"]))
@@ -95,7 +66,6 @@ class AssessmentModule:
             judgements: dict[str, judge.Judgement] = {}
             target = case.get("assessment_target", {})
             if self._model is not None and records:
-                # Each step must fit twice over, so a slow machine stops before the limit.
                 judgements = judge.judge_case(records, self._criteria, self._model, target.get("description", ""),
                                               lambda last: guard.have_ms(2000.0 * last))
 
@@ -116,7 +86,6 @@ class AssessmentModule:
                 **kwargs,
             )
         except budget.BudgetExceeded:
-            # Prefer a scientific abstention over a server-side TIMEOUT.
             return output.abstained(
                 case,
                 self._checklist_version,
@@ -126,7 +95,7 @@ class AssessmentModule:
             )
 
     def reset_case(self) -> None:
-        """No per-case state is kept; each case runs in a fresh cold process."""
+        pass
 
     def close(self) -> None:
-        """Nothing to release: every PDF is closed as soon as it is read."""
+        pass

@@ -1,15 +1,3 @@
-"""Criterion judge (Task 11): met or insufficient evidence for each checklist criterion.
-
-For one criterion: BM25 narrows the case to candidate sentences (`retrieval.py`), a zero-shot
-entailment model scores them against a plain statement of the criterion, and the criterion is
-`met` when the best score clears its threshold. Evidence is real sentences from the page, best
-first, so quotes can never be invented. Without the model (not in the store, or short of time)
-every criterion stays `insufficient evidence`.
-
-Criteria come from the checklist in `load()`. Statements are chosen from the description's text,
-never its ID; an unknown criterion is judged on its own description.
-"""
-
 from __future__ import annotations
 
 import os
@@ -37,14 +25,11 @@ DEFAULT_THRESHOLD = 0.5
 _SENTENCE_END = re.compile(r"(?<!U\.S\.)(?<!et al\.)(?<!Fig\.)(?<![Nn]o\.)(?<!\b[A-Z]\.)(?<=[.!?])\s+(?=[A-Z0-9(])")
 _LEVEL = re.compile(r"\(TRL (\d)\)")
 _NOT_PROSE = re.compile(r"^(figure|table|plate|appendix|contents|photograph)\b|https?://|\bdoi\b|\.{4,}", re.IGNORECASE)
-# Report furniture that can read like a claim: copyright notices, cover pages, running titles.
 _BOILERPLATE = re.compile(
     r"public domain|copyrighted|reproduc(e|tion) of|prepared in cooperation|national technical information|"
     r"suggested citation|for more information|manuscript approved|does not constitute|as used in this report|"
     r"scientific investigations report \d|open-file report \d", re.IGNORECASE)
-# Table of contents: dot leaders ("Abstract... .1 Introduction") or a contents list run together.
 _CONTENTS = re.compile(r"(?:\.\s?){3,}|\bContents\b.*\bIntroduction\b")
-# One reference-list entry ("Guy, H.P., 1969, Laboratory theory..."): cites a work, never evidence.
 _REFERENCE_ENTRY = re.compile(r"^[A-Z][\w'’-]+, (?:[A-Z]\.\s?){1,3}(?:,|and\b).*?\b(?:19|20)\d{2}[a-z]?,")
 _REFERENCE_LINE = re.compile(r"\b(19|20)\d{2}[a-z]?[,.:]|\bdoi\b|https?://", re.IGNORECASE)
 _REFERENCE_HEADING = re.compile(r"^\s*(references( cited)?|bibliography|selected references)\s*$", re.IGNORECASE | re.MULTILINE)
@@ -52,16 +37,11 @@ _REFERENCE_HEADING = re.compile(r"^\s*(references( cited)?|bibliography|selected
 
 @dataclass(frozen=True)
 class Profile:
-    query: str  # extra BM25 terms: reports say "calibrated", the checklist says "validated"
-    statement: str  # what the entailment model checks each candidate sentence against
+    query: str
+    statement: str
     threshold: float = DEFAULT_THRESHOLD
 
 
-# Thresholds come from data/public_criteria_labels.json and data/cases (team/eval_judge.py). A
-# missed `met` costs twice a wrong one in Part B and a wrong one loses nothing in Part C unless the
-# quote is invented, which it cannot be here, so they sit well below "certain".
-# The experts read the hardware words of C04-C09 by analogy for models and data products
-# (PROBLEM_DESCRIPTION 5.1), so the statements and query terms do too.
 _LEVEL_PROFILES: dict[int, Profile] = {
     1: Profile("principle theory equation based previous studies literature physical process",
                "The text states the scientific principles or earlier studies that the method is based on.", 0.5),
@@ -104,7 +84,6 @@ class Judgement:
     status: str
     score: float = 0.0
     evidence: list[dict[str, Any]] = field(default_factory=list)
-    # The best verified candidates whatever their score, for align_with_trl.
     fallback: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -122,19 +101,18 @@ def _usable(sentence: str) -> bool:
             or _REFERENCE_ENTRY.search(sentence) or _CONTENTS.search(sentence)):
         return False
     if sum(c.isalpha() or c.isspace() for c in sentence) / len(sentence) < 0.8:
-        return False  # tables and number runs
+        return False
     return not level_is_claim_or_plan(sentence)
 
 
 def sentences_of(pages: Iterable[Mapping[str, Any]]) -> list[Sentence]:
-    """Prose sentences of every page, from `pages.read_pages` records."""
     out: list[Sentence] = []
     seen: set[str] = set()
     for page in pages:
         text = str(page.get("text", ""))
         if _is_reference_page(text):
             continue
-        flat = " ".join(text.replace(chr(0xFFFE), "-").split())  # pdfium's line-break hyphen
+        flat = " ".join(text.replace(chr(0xFFFE), "-").split())
         for sentence in _SENTENCE_END.split(flat):
             if sentence not in seen and _usable(sentence):
                 seen.add(sentence)
@@ -151,18 +129,15 @@ def profile_for(description: str, target: str = "") -> Profile:
         if marker in lowered:
             return profile
     if "assessment target" in lowered and target:
-        return Profile(target, _TARGET_STATEMENT.format(target=target))  # default threshold
+        return Profile(target, _TARGET_STATEMENT.format(target=target))
     return Profile("", description)
 
 
 def query_for(description: str, profile: Profile) -> str:
-    # Not the target's name: it appears in every sentence that mentions the model and would win
-    # every criterion. Only the assessment-target criterion searches on it, through its profile.
     return f"{description} {profile.statement} {profile.query}"
 
 
 class SentenceSearch:
-    """BM25 over a case's sentences; reused for all criteria of the case."""
 
     def __init__(self, sentences: Sequence[Sentence]) -> None:
         self.sentences = list(sentences)
@@ -173,7 +148,6 @@ class SentenceSearch:
 
 
 class Entailment:
-    """The catalogue's zero-shot model, loaded once per case from the read-only store."""
 
     def __init__(self, directory: Path) -> None:
         import torch
@@ -201,7 +175,6 @@ class Entailment:
 
 
 def load_entailment() -> Entailment | None:
-    """The model when the store has it; None means judge nothing rather than fail the case."""
     store = os.environ.get("APCTT_MODEL_STORE")
     if not store or not (Path(store) / MODEL_PATH).is_dir():
         return None
@@ -209,8 +182,6 @@ def load_entailment() -> Entailment | None:
 
 
 def _verified_span(sentence: Sentence) -> str | None:
-    # pdfium returns a line-break hyphen as U+FFFE (a non-character); the page prints "-", so the
-    # quote uses "-" too, and is checked against the page text read the same way.
     page_text = sentence.original_page_text.replace(chr(0xFFFE), "-")
     return sentence.text if quotes.verify_quote(sentence.text, page_text) else None
 
@@ -283,19 +254,11 @@ def _judge_candidates(
 
 
 def criterion_level(description: str) -> int | None:
-    """The TRL a level criterion stands for ("... (TRL 6): ..."), None for the cross-cutting ones."""
     level = _LEVEL.search(description)
     return int(level.group(1)) if level else None
 
 
 def align_with_trl(judgements: dict[str, Judgement], criteria: Sequence[Mapping[str, str]], trl: int | None) -> None:
-    """Make the level criteria agree with the decided TRL, in place.
-
-    The checklist has one criterion per TRL level and labels follow that ladder, so a level above
-    the TRL is never met, and a level at or below it is met on its best verified sentences even
-    under the strict threshold. A missed `met` costs twice a wrong one in Part B. On the labelled
-    sets B rose from 0.694 to 0.781 (USGS drafts) and 0.442 to 0.627 (NASA): team/eval_ladder.py.
-    """
     if trl is None:
         return
     for criterion in criteria:
@@ -328,7 +291,6 @@ def _criterion_priority(description: str) -> int:
 
 def judge_case(records: Iterable[Mapping[str, Any]], criteria: Sequence[Mapping[str, str]], model: Entailment,
                target: str, keep_going: Callable[[float], bool]) -> dict[str, Judgement]:
-    """Use model scoring within a bounded time budget, then judge by keywords."""
     judge_started = time.monotonic()
     search = SentenceSearch(sentences_of(records))
     judgements: dict[str, Judgement] = {}

@@ -1,5 +1,3 @@
-"""Small dependency-free BM25 page retrieval."""
-
 from __future__ import annotations
 
 import math
@@ -32,7 +30,6 @@ def _stem(token: str) -> str:
 
 
 def tokenize(text: str) -> list[str]:
-    """Lowercase, remove common stopwords, and apply light suffix stemming."""
     tokens = []
     for token in _TOKEN_RE.findall(text.lower()):
         if token not in _STOPWORDS:
@@ -43,7 +40,6 @@ def tokenize(text: str) -> list[str]:
 
 
 class BM25Index:
-    """An immutable page index that can be reused for multiple criterion queries."""
 
     def __init__(self, pages: Sequence[dict[str, Any]], k1: float = 1.5, b: float = 0.75) -> None:
         self.pages = list(pages)
@@ -119,11 +115,6 @@ def rank_pages(
     extra_keywords: Iterable[str] | str | None = None,
     index: BM25Index | None = None,
 ) -> list[dict[str, Any]]:
-    """Rank distinct pages best-first; pass an index to reuse work across criteria.
-
-    ``extra_keywords`` is a lightweight query-expansion hook. An index can also be
-    passed as ``pages`` directly, or separately with the original page sequence.
-    """
     if isinstance(pages, BM25Index):
         active_index = pages
     elif index is not None:
