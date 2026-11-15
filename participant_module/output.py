@@ -1,22 +1,3 @@
-"""Result builder and local validator (Task 14).
-
-Constructs the result JSON with *exactly* the allowed fields and enforces the result
-contract locally, so the server never has to reject us with INVALID_OUTPUT. This module
-ships inside the submission and therefore uses **only the Python standard library** — at
-the event the module runs in the common base environment, where the kit's
-`apctt_contracts` package is not importable. The kit's own `validate_result` stays as a
-dev-time cross-check (see team/verify_module.py); the rules below mirror DATA_CONTRACT §2.
-
-Two ways to use it:
-
-* Build a result from per-criterion decisions with `build_result(...)`. It repairs the
-  safe mistakes (a `met` criterion with no evidence becomes `insufficient evidence` with a
-  note; evidence pointing at a missing document/page is dropped) and raises
-  `ResultContractError` for anything it cannot safely repair.
-* Wrap a whole assessment with `safe_result(...)`: on any exception it returns a clean,
-  contract-valid `failed` result with an `error_code` instead of letting the worker crash.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -30,16 +11,11 @@ ABSTENTION_REASONS = (
     "ambiguous scope",
     "out of scope",
 )
-# Optional result fields that must be OMITTED (never null) when unused, and are
-# forbidden on a `failed` result.
 OPTIONAL_FIELDS = ("confidence", "uncertainty", "trl_rationale", "criterion_rationale")
 
 
 class ResultContractError(ValueError):
-    """Raised when a result cannot be built as a contract-valid object."""
-
-
-# -- small helpers ------------------------------------------------------------
+    pass
 
 
 def _is_nonblank(text: Any) -> bool:
@@ -47,7 +23,6 @@ def _is_nonblank(text: Any) -> bool:
 
 
 def _page_counts(case: Mapping[str, Any]) -> dict[str, int | None]:
-    """document_id -> page_count. None when the case view carries no count."""
     counts: dict[str, int | None] = {}
     for document in case.get("documents", []):
         doc_id = document.get("document_id")
@@ -58,7 +33,6 @@ def _page_counts(case: Mapping[str, Any]) -> dict[str, int | None]:
 
 
 def base_identity(case: Mapping[str, Any], checklist_version: str) -> dict[str, Any]:
-    """The four identity fields every result copies from the case/checklist."""
     return {
         "schema_version": case["schema_version"],
         "checklist_version": checklist_version,
@@ -71,12 +45,6 @@ def _clean_evidence(
     items: Any,
     page_counts: Mapping[str, int | None],
 ) -> list[dict[str, Any]]:
-    """Keep only evidence items that point at a real document and in-range page.
-
-    A page is kept when the page count is unknown (raw request view) and the page is a
-    positive integer; dropped when it is out of the known range. `supporting_span` is kept
-    only when it is a non-blank string.
-    """
     cleaned: list[dict[str, Any]] = []
     if not isinstance(items, Sequence) or isinstance(items, (str, bytes)):
         return cleaned
@@ -100,9 +68,6 @@ def _clean_evidence(
     return cleaned
 
 
-# -- builders -----------------------------------------------------------------
-
-
 def build_result(
     case: Mapping[str, Any],
     checklist_version: str,
@@ -120,14 +85,6 @@ def build_result(
     trl_rationale: str | None = None,
     criterion_rationale: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Build a contract-valid result, repairing the safe mistakes.
-
-    `failed` results carry empty maps and no optional fields. `completed`/`abstained`
-    results get one entry per criterion in `criterion_status` and `evidence_reference`;
-    a `met` criterion with no surviving evidence is downgraded to `insufficient evidence`
-    with a generated note, and every `insufficient evidence` criterion is guaranteed a
-    non-blank `missing_evidence` note.
-    """
     if status not in ASSESSMENT_STATUSES:
         raise ResultContractError(f"unknown assessment_status: {status!r}")
     ids = list(criterion_ids)
@@ -162,7 +119,6 @@ def build_result(
             raise ResultContractError(f"bad status {cstatus!r} for criterion {cid!r}")
         evidence = _clean_evidence(evidence_in.get(cid, []), page_counts)
         if cstatus == "met" and not evidence:
-            # Cannot claim `met` without evidence — downgrade rather than emit an invalid result.
             cstatus = "insufficient evidence"
         out_status[cid] = cstatus
         out_evidence[cid] = evidence
@@ -184,12 +140,11 @@ def build_result(
             raise ResultContractError("a completed result needs an integer TRL 1-9")
         result["predicted_trl"] = predicted_trl
         result["abstention_reason"] = None
-    else:  # abstained
+    else:
         reason = abstention_reason if abstention_reason in ABSTENTION_REASONS else "insufficient evidence"
         result["predicted_trl"] = None
         result["abstention_reason"] = reason
 
-    # Optional fields: only attach when valid; never attach to a failed result (handled above).
     if confidence is not None and isinstance(confidence, (int, float)) and not isinstance(confidence, bool):
         if 0 <= float(confidence) <= 1:
             result["confidence"] = confidence
@@ -213,7 +168,6 @@ def abstained(
     reason: str = "insufficient evidence",
     missing_note: str = "No sufficient evidence was found.",
 ) -> dict[str, Any]:
-    """A fully abstaining result: every criterion `insufficient evidence`."""
     return build_result(
         case,
         checklist_version,
@@ -229,7 +183,6 @@ def failed(
     checklist_version: str,
     error_code: str,
 ) -> dict[str, Any]:
-    """A contract-valid `failed` result with our own error_code."""
     return build_result(
         case,
         checklist_version,
@@ -247,20 +200,12 @@ def safe_result(
     error_code: str = "TEAM_MODULE_ASSESS_ERROR",
     on_error: Callable[[BaseException], None] | None = None,
 ) -> dict[str, Any]:
-    """Run `assess()`; on any exception return a clean `failed` result.
-
-    `on_error` (e.g. a logger) is called with the exception before the failed result is
-    built, so the traceback can reach stderr.log.
-    """
     try:
         return assess()
-    except BaseException as error:  # noqa: BLE001 - last line of defence before the worker
+    except BaseException as error:
         if on_error is not None:
             on_error(error)
         return failed(case, checklist_version, error_code)
-
-
-# -- local validator (safety net; mirrors DATA_CONTRACT §2) -------------------
 
 
 def validate_local(
@@ -268,11 +213,6 @@ def validate_local(
     case: Mapping[str, Any],
     criterion_ids: Sequence[str],
 ) -> list[str]:
-    """Return a list of human-readable problems; empty means contract-valid.
-
-    This is a defensive check for our own tests and the regression script (Task 16). It is
-    not a replacement for the kit's `validate_result`, which is authoritative.
-    """
     problems: list[str] = []
     if not isinstance(result, Mapping):
         return ["result is not a JSON object"]
@@ -282,7 +222,6 @@ def validate_local(
     if status not in ASSESSMENT_STATUSES:
         problems.append(f"assessment_status {status!r} not allowed")
 
-    # Identity fields.
     for field, expected in base_identity(case, result.get("checklist_version", "")).items():
         if field == "checklist_version":
             continue

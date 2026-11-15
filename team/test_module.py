@@ -148,7 +148,8 @@ def _fake_read_pages(docs: dict[str, list[str]]):
 class AdapterTrlTests(unittest.TestCase):
     CHECKLIST = {"version": VERSION, "criteria": [{"criterion_id": c} for c in IDS]}
 
-    def _run(self, docs: dict[str, list[str]], case_docs: list[dict], target_type: str = "component") -> dict:
+    # An unknown type reaches the TRL cues; every contract type starts from a default (trl._TARGET_DEFAULT).
+    def _run(self, docs: dict[str, list[str]], case_docs: list[dict], target_type: str = "unknown") -> dict:
         module = AssessmentModule()
         module.load({"checklist": self.CHECKLIST}, Path("."))
         case = dict(CASE, assessment_target={"target_id": "T001", "type": target_type, "description": "x"},

@@ -61,6 +61,8 @@ def main() -> int:
     request = json.loads((KIT / "docs/EXAMPLE_REQUEST.json").read_text())
     demo = json.loads((KIT / "contracts/checklist.demo.json").read_text())
 
+    # Since kit 0.5 the example request carries the official checklist version; match the demo one.
+    request["case"]["checklist_version"] = demo["version"]
     total = check(demo, copy.deepcopy(request["case"]), "DEMO checklist")
 
     alt = {
